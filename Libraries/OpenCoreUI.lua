@@ -729,6 +729,7 @@ function OpenCore:CreateWindow(config)
 				valueBox.TextXAlignment = Enum.TextXAlignment.Right
 				valueBox.ClearTextOnFocus = false
 				valueBox.Parent = sliderFrame
+				valueBox.ZIndex = 2
 
 				local sliderBar = Instance.new("TextButton")
 				sliderBar.BackgroundColor3 = Theme.Card
