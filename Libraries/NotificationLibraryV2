@@ -1,0 +1,1675 @@
+--[[
+This Notification Library is free to use in any projects.
+                          is a Version 2.0 of https://raw.githubusercontent.com/Open-Cor3/Roblox-Libraries/refs/heads/main/Notifications/OpenCoreNotify/Source.lua
+
+--]]
+
+
+
+local NotificationLibrary = {}
+NotificationLibrary.__index = NotificationLibrary
+
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+-- ============================================================================
+-- CONFIGURATION & THEMES
+-- ============================================================================
+
+local CONFIG = {
+    ANIMATION_SPEED = 0.3,
+    DEFAULT_DURATION = 5,
+    CORNER_RADIUS = UDim.new(0, 8),
+    
+    -- Position Settings
+    POSITION = "TopRight", -- TopRight, TopLeft, BottomRight, BottomLeft, Top, Bottom, Center, Left, Right
+    POSITION_OFFSET = {
+        X = 20,
+        Y = 20
+    },
+    
+    -- Container Size
+    CONTAINER_WIDTH = 300,
+    NOTIFICATION_HEIGHT = 90,
+    
+    -- Animation Settings
+    ENTRANCE_ANIMATION = "Slide", -- Slide, Fade, Scale, Bounce, Drop, Rise
+    EXIT_ANIMATION = "Slide", -- Slide, Fade, Scale
+    
+    -- Advanced Animation Settings
+    ANIMATION_EASING = Enum.EasingStyle.Back,
+    ANIMATION_DIRECTION = Enum.EasingDirection.Out,
+    
+    -- Button Settings
+    BUTTON_HOVER_TWEEN = {
+        SCALE = Vector3.new(1.05, 1.05, 1.05),
+        DURATION = 0.15,
+    },
+    BUTTON_CLICK_TWEEN = {
+        SCALE = Vector3.new(0.95, 0.95, 0.95),
+        DURATION = 0.1,
+    },
+    
+    -- Effect Settings
+    PULSE_EFFECT = {
+        MIN_TRANSPARENCY = 0.7,
+        MAX_TRANSPARENCY = 1,
+        DURATION = 1.5,
+        ENABLED = true
+    },
+    GRADIENT_ROTATION = {
+        ENABLED = true,
+        SPEED = 15
+    },
+    SHADOW_FLOAT = {
+        ENABLED = true,
+        DURATION = 2
+    },
+    TEXT_APPEAR_DELAY = 0.2,
+    RIPPLE_EFFECT_DURATION = 0.6,
+    RIPPLE_ENABLED = true,
+    
+    -- Auto-close settings
+    AUTO_CLOSE_ON_NEW = false, -- If true, closes all notifications when a new one appears
+    
+    -- Progress Bar Settings
+    PROGRESS_BAR = {
+        ENABLED = true,
+        HEIGHT = 3,
+        ANIMATED_GRADIENT = true
+    },
+    
+    -- Current Theme (can be changed)
+    CURRENT_THEME = "Dark",
+    
+    -- Theme Definitions
+    THEMES = {
+        Dark = {
+            BACKGROUND = Color3.fromRGB(35, 35, 35),
+            BACKGROUND_SECONDARY = Color3.fromRGB(55, 55, 55),
+            TEXT_PRIMARY = Color3.fromRGB(255, 255, 255),
+            TEXT_SECONDARY = Color3.fromRGB(200, 200, 200),
+            SUCCESS = Color3.fromRGB(76, 175, 80),
+            WARNING = Color3.fromRGB(255, 193, 7),
+            ERROR = Color3.fromRGB(244, 67, 54),
+            INFO = Color3.fromRGB(33, 150, 243),
+            ACCENT = Color3.fromRGB(100, 100, 100),
+            SHADOW_TRANSPARENCY = 0.7,
+            GRADIENT_ENABLED = true
+        },
+        
+        Light = {
+            BACKGROUND = Color3.fromRGB(255, 255, 255),
+            BACKGROUND_SECONDARY = Color3.fromRGB(245, 245, 245),
+            TEXT_PRIMARY = Color3.fromRGB(33, 33, 33),
+            TEXT_SECONDARY = Color3.fromRGB(100, 100, 100),
+            SUCCESS = Color3.fromRGB(76, 175, 80),
+            WARNING = Color3.fromRGB(255, 152, 0),
+            ERROR = Color3.fromRGB(244, 67, 54),
+            INFO = Color3.fromRGB(33, 150, 243),
+            ACCENT = Color3.fromRGB(200, 200, 200),
+            SHADOW_TRANSPARENCY = 0.8,
+            GRADIENT_ENABLED = false
+        },
+        
+        Midnight = {
+            BACKGROUND = Color3.fromRGB(15, 23, 42),
+            BACKGROUND_SECONDARY = Color3.fromRGB(30, 41, 59),
+            TEXT_PRIMARY = Color3.fromRGB(248, 250, 252),
+            TEXT_SECONDARY = Color3.fromRGB(148, 163, 184),
+            SUCCESS = Color3.fromRGB(34, 197, 94),
+            WARNING = Color3.fromRGB(251, 191, 36),
+            ERROR = Color3.fromRGB(239, 68, 68),
+            INFO = Color3.fromRGB(59, 130, 246),
+            ACCENT = Color3.fromRGB(71, 85, 105),
+            SHADOW_TRANSPARENCY = 0.6,
+            GRADIENT_ENABLED = true
+        },
+        
+        Nord = {
+            BACKGROUND = Color3.fromRGB(46, 52, 64),
+            BACKGROUND_SECONDARY = Color3.fromRGB(59, 66, 82),
+            TEXT_PRIMARY = Color3.fromRGB(236, 239, 244),
+            TEXT_SECONDARY = Color3.fromRGB(216, 222, 233),
+            SUCCESS = Color3.fromRGB(163, 190, 140),
+            WARNING = Color3.fromRGB(235, 203, 139),
+            ERROR = Color3.fromRGB(191, 97, 106),
+            INFO = Color3.fromRGB(136, 192, 208),
+            ACCENT = Color3.fromRGB(76, 86, 106),
+            SHADOW_TRANSPARENCY = 0.7,
+            GRADIENT_ENABLED = true
+        },
+        
+        Dracula = {
+            BACKGROUND = Color3.fromRGB(40, 42, 54),
+            BACKGROUND_SECONDARY = Color3.fromRGB(68, 71, 90),
+            TEXT_PRIMARY = Color3.fromRGB(248, 248, 242),
+            TEXT_SECONDARY = Color3.fromRGB(189, 147, 249),
+            SUCCESS = Color3.fromRGB(80, 250, 123),
+            WARNING = Color3.fromRGB(241, 250, 140),
+            ERROR = Color3.fromRGB(255, 85, 85),
+            INFO = Color3.fromRGB(139, 233, 253),
+            ACCENT = Color3.fromRGB(98, 114, 164),
+            SHADOW_TRANSPARENCY = 0.65,
+            GRADIENT_ENABLED = true
+        },
+        
+        Pastel = {
+            BACKGROUND = Color3.fromRGB(255, 250, 250),
+            BACKGROUND_SECONDARY = Color3.fromRGB(255, 240, 245),
+            TEXT_PRIMARY = Color3.fromRGB(51, 51, 51),
+            TEXT_SECONDARY = Color3.fromRGB(102, 102, 102),
+            SUCCESS = Color3.fromRGB(152, 251, 152),
+            WARNING = Color3.fromRGB(255, 218, 185),
+            ERROR = Color3.fromRGB(255, 182, 193),
+            INFO = Color3.fromRGB(176, 224, 230),
+            ACCENT = Color3.fromRGB(221, 160, 221),
+            SHADOW_TRANSPARENCY = 0.85,
+            GRADIENT_ENABLED = false
+        },
+        
+        Neon = {
+            BACKGROUND = Color3.fromRGB(10, 10, 15),
+            BACKGROUND_SECONDARY = Color3.fromRGB(20, 20, 30),
+            TEXT_PRIMARY = Color3.fromRGB(255, 255, 255),
+            TEXT_SECONDARY = Color3.fromRGB(180, 180, 255),
+            SUCCESS = Color3.fromRGB(0, 255, 127),
+            WARNING = Color3.fromRGB(255, 215, 0),
+            ERROR = Color3.fromRGB(255, 20, 147),
+            INFO = Color3.fromRGB(0, 191, 255),
+            ACCENT = Color3.fromRGB(138, 43, 226),
+            SHADOW_TRANSPARENCY = 0.5,
+            GRADIENT_ENABLED = true
+        },
+        
+        Ocean = {
+            BACKGROUND = Color3.fromRGB(26, 56, 77),
+            BACKGROUND_SECONDARY = Color3.fromRGB(38, 70, 83),
+            TEXT_PRIMARY = Color3.fromRGB(233, 237, 239),
+            TEXT_SECONDARY = Color3.fromRGB(168, 218, 220),
+            SUCCESS = Color3.fromRGB(69, 183, 143),
+            WARNING = Color3.fromRGB(255, 183, 77),
+            ERROR = Color3.fromRGB(240, 84, 84),
+            INFO = Color3.fromRGB(66, 165, 245),
+            ACCENT = Color3.fromRGB(42, 157, 143),
+            SHADOW_TRANSPARENCY = 0.7,
+            GRADIENT_ENABLED = true
+        },
+        
+        Sunset = {
+            BACKGROUND = Color3.fromRGB(44, 26, 58),
+            BACKGROUND_SECONDARY = Color3.fromRGB(88, 24, 69),
+            TEXT_PRIMARY = Color3.fromRGB(254, 254, 254),
+            TEXT_SECONDARY = Color3.fromRGB(255, 183, 197),
+            SUCCESS = Color3.fromRGB(163, 230, 53),
+            WARNING = Color3.fromRGB(255, 214, 10),
+            ERROR = Color3.fromRGB(255, 87, 51),
+            INFO = Color3.fromRGB(255, 159, 243),
+            ACCENT = Color3.fromRGB(199, 0, 57),
+            SHADOW_TRANSPARENCY = 0.65,
+            GRADIENT_ENABLED = true
+        },
+        
+        Forest = {
+            BACKGROUND = Color3.fromRGB(27, 38, 44),
+            BACKGROUND_SECONDARY = Color3.fromRGB(39, 55, 70),
+            TEXT_PRIMARY = Color3.fromRGB(230, 241, 230),
+            TEXT_SECONDARY = Color3.fromRGB(168, 218, 181),
+            SUCCESS = Color3.fromRGB(87, 204, 153),
+            WARNING = Color3.fromRGB(252, 196, 25),
+            ERROR = Color3.fromRGB(235, 77, 75),
+            INFO = Color3.fromRGB(106, 176, 76),
+            ACCENT = Color3.fromRGB(58, 83, 155),
+            SHADOW_TRANSPARENCY = 0.7,
+            GRADIENT_ENABLED = true
+        }
+    }
+}
+
+local function GetTheme()
+    return CONFIG.THEMES[CONFIG.CURRENT_THEME] or CONFIG.THEMES.Dark
+end
+
+-- ============================================================================
+-- POSITION CALCULATIONS
+-- ============================================================================
+
+local function CalculatePosition(containerSize)
+    local theme = GetTheme()
+    local offset = CONFIG.POSITION_OFFSET
+    local position = CONFIG.POSITION
+    
+    local anchorPoint = Vector2.new(0, 0)
+    local udimPosition = UDim2.new(0, 0, 0, 0)
+    
+    if position == "TopRight" then
+        anchorPoint = Vector2.new(1, 0)
+        udimPosition = UDim2.new(1, -offset.X, 0, offset.Y)
+    elseif position == "TopLeft" then
+        anchorPoint = Vector2.new(0, 0)
+        udimPosition = UDim2.new(0, offset.X, 0, offset.Y)
+    elseif position == "BottomRight" then
+        anchorPoint = Vector2.new(1, 1)
+        udimPosition = UDim2.new(1, -offset.X, 1, -offset.Y)
+    elseif position == "BottomLeft" then
+        anchorPoint = Vector2.new(0, 1)
+        udimPosition = UDim2.new(0, offset.X, 1, -offset.Y)
+    elseif position == "Top" then
+        anchorPoint = Vector2.new(0.5, 0)
+        udimPosition = UDim2.new(0.5, 0, 0, offset.Y)
+    elseif position == "Bottom" then
+        anchorPoint = Vector2.new(0.5, 1)
+        udimPosition = UDim2.new(0.5, 0, 1, -offset.Y)
+    elseif position == "Center" then
+        anchorPoint = Vector2.new(0.5, 0.5)
+        udimPosition = UDim2.new(0.5, 0, 0.5, 0)
+    elseif position == "Left" then
+        anchorPoint = Vector2.new(0, 0.5)
+        udimPosition = UDim2.new(0, offset.X, 0.5, 0)
+    elseif position == "Right" then
+        anchorPoint = Vector2.new(1, 0.5)
+        udimPosition = UDim2.new(1, -offset.X, 0.5, 0)
+    end
+    
+    return anchorPoint, udimPosition
+end
+
+-- ============================================================================
+-- ANIMATION FUNCTIONS
+-- ============================================================================
+
+local function CreateAnimationWrapper(parent, notificationFrame)
+    local wrapper = Instance.new("Frame")
+    wrapper.Name = "AnimationWrapper"
+    wrapper.BackgroundTransparency = 1
+    wrapper.Size = UDim2.new(1, 0, 0, CONFIG.NOTIFICATION_HEIGHT)
+    wrapper.BorderSizePixel = 0
+    wrapper.ClipsDescendants = false
+    wrapper.Parent = parent
+    
+    notificationFrame.AnchorPoint = Vector2.new(0.5, 0)
+    notificationFrame.Position = UDim2.new(0.5, 0, 0, 0)
+    notificationFrame.Parent = wrapper
+    
+    return wrapper
+end
+
+local function GetEntranceAnimation(frame, wrapper)
+    local animType = CONFIG.ENTRANCE_ANIMATION
+    local speed = CONFIG.ANIMATION_SPEED
+    local easing = CONFIG.ANIMATION_EASING
+    local direction = CONFIG.ANIMATION_DIRECTION
+    
+    local tweenInfo, properties
+    local position = CONFIG.POSITION
+    
+    if animType == "Slide" then
+        local startPos
+        if position:find("Right") then
+            startPos = UDim2.new(1.5, 0, 0, 0)
+        elseif position:find("Left") then
+            startPos = UDim2.new(-0.5, 0, 0, 0)
+        elseif position:find("Top") or position:find("Bottom") then
+            startPos = UDim2.new(1.5, 0, 0, 0)
+        else
+            startPos = UDim2.new(1.5, 0, 0, 0)
+        end
+        
+        frame.Position = startPos
+        tweenInfo = TweenInfo.new(speed, easing, direction)
+        properties = {Position = UDim2.new(0.5, 0, 0, 0)}
+        
+    elseif animType == "Fade" then
+        frame.BackgroundTransparency = 1
+        tweenInfo = TweenInfo.new(speed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        properties = {BackgroundTransparency = 0.1}
+        
+    elseif animType == "Scale" then
+        frame.Size = UDim2.new(0, 0, 0, 0)
+        frame.Position = UDim2.new(0.5, 0, 0, CONFIG.NOTIFICATION_HEIGHT / 2)
+        tweenInfo = TweenInfo.new(speed, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        properties = {
+            Size = UDim2.new(1, 0, 0, CONFIG.NOTIFICATION_HEIGHT),
+            Position = UDim2.new(0.5, 0, 0, 0)
+        }
+        
+    elseif animType == "Bounce" then
+        local startPos
+        if position:find("Right") then
+            startPos = UDim2.new(1.5, 0, 0, 0)
+        elseif position:find("Left") then
+            startPos = UDim2.new(-0.5, 0, 0, 0)
+        else
+            startPos = UDim2.new(1.5, 0, 0, 0)
+        end
+        
+        frame.Position = startPos
+        tweenInfo = TweenInfo.new(speed * 1.5, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
+        properties = {Position = UDim2.new(0.5, 0, 0, 0)}
+        
+    elseif animType == "Drop" then
+        frame.Position = UDim2.new(0.5, 0, -1, 0)
+        tweenInfo = TweenInfo.new(speed * 1.2, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out)
+        properties = {Position = UDim2.new(0.5, 0, 0, 0)}
+        
+    elseif animType == "Rise" then
+        frame.Position = UDim2.new(0.5, 0, 1, 0)
+        tweenInfo = TweenInfo.new(speed * 1.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        properties = {Position = UDim2.new(0.5, 0, 0, 0)}
+    end
+    
+    return TweenService:Create(frame, tweenInfo, properties)
+end
+
+local function GetExitAnimation(frame, wrapper)
+    local animType = CONFIG.EXIT_ANIMATION
+    local speed = CONFIG.ANIMATION_SPEED
+    
+    local tweenInfo, properties
+    local position = CONFIG.POSITION
+    
+    if animType == "Slide" then
+        local exitPos
+        
+        if position:find("Right") then
+            exitPos = UDim2.new(1.5, 0, 0, 0)
+        elseif position:find("Left") then
+            exitPos = UDim2.new(-0.5, 0, 0, 0)
+        else
+            exitPos = UDim2.new(1.5, 0, 0, 0)
+        end
+        
+        tweenInfo = TweenInfo.new(speed, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+        properties = {Position = exitPos}
+        
+    elseif animType == "Fade" then
+        tweenInfo = TweenInfo.new(speed, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        properties = {BackgroundTransparency = 1}
+        
+    elseif animType == "Scale" then
+        tweenInfo = TweenInfo.new(speed, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        properties = {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = UDim2.new(0.5, 0, 0, CONFIG.NOTIFICATION_HEIGHT / 2)
+        }
+    end
+    
+    return TweenService:Create(frame, tweenInfo, properties)
+end
+
+-- ============================================================================
+-- CORE FUNCTIONS
+-- ============================================================================
+
+function NotificationLibrary:Init()
+    local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+
+    if PlayerGui:FindFirstChild("NotificationContainer") then
+        local container = PlayerGui.NotificationContainer
+        local frame = container.NotificationsFrame
+        
+        local anchorPoint, position = CalculatePosition()
+        frame.AnchorPoint = anchorPoint
+        frame.Position = position
+        frame.Size = UDim2.new(0, CONFIG.CONTAINER_WIDTH, 1, -40)
+        
+        return container
+    end
+
+    local NotificationContainer = Instance.new("ScreenGui")
+    NotificationContainer.Name = "NotificationContainer"
+    NotificationContainer.ResetOnSpawn = false
+    NotificationContainer.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    local NotificationsFrame = Instance.new("Frame")
+    NotificationsFrame.Name = "NotificationsFrame"
+    NotificationsFrame.BackgroundTransparency = 1
+    NotificationsFrame.Size = UDim2.new(0, CONFIG.CONTAINER_WIDTH, 1, -40)
+    
+    local anchorPoint, position = CalculatePosition()
+    NotificationsFrame.AnchorPoint = anchorPoint
+    NotificationsFrame.Position = position
+    NotificationsFrame.Parent = NotificationContainer
+
+    local ListLayout = Instance.new("UIListLayout")
+    ListLayout.Name = "ListLayout"
+    ListLayout.Padding = UDim.new(0, 10)
+    ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    if CONFIG.POSITION:find("Bottom") then
+        ListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    else
+        ListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+    end
+    
+    ListLayout.Parent = NotificationsFrame
+
+    NotificationContainer.Parent = PlayerGui
+    return NotificationContainer
+end
+
+function NotificationLibrary:CreateRippleEffect(parent, x, y, color)
+    if not CONFIG.RIPPLE_ENABLED then return end
+    
+    local ripple = Instance.new("Frame")
+    ripple.Name = "RippleEffect"
+    ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+    ripple.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
+    ripple.BackgroundTransparency = 0.7
+    ripple.BorderSizePixel = 0
+    ripple.Position = UDim2.new(0, x, 0, y)
+    ripple.Size = UDim2.new(0, 0, 0, 0)
+    ripple.ZIndex = 2
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = ripple
+
+    ripple.Parent = parent
+
+    local targetSize = math.max(parent.AbsoluteSize.X, parent.AbsoluteSize.Y) * 2
+    local tweenInfo = TweenInfo.new(CONFIG.RIPPLE_EFFECT_DURATION, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+    local sizeTween = TweenService:Create(ripple, tweenInfo, {
+        Size = UDim2.new(0, targetSize, 0, targetSize),
+        BackgroundTransparency = 1
+    })
+
+    sizeTween:Play()
+
+    task.delay(CONFIG.RIPPLE_EFFECT_DURATION, function()
+        if ripple and ripple.Parent then
+            ripple:Destroy()
+        end
+    end)
+end
+
+function NotificationLibrary:Notify(options)
+    local container = self:Init()
+    local notificationsFrame = container.NotificationsFrame
+    local theme = GetTheme()
+    
+    if CONFIG.AUTO_CLOSE_ON_NEW then
+        self:CloseAll()
+        task.wait(0.1)
+    end
+
+    options = options or {}
+    local title = options.Title or "Notification"
+    local text = options.Text or ""
+    local duration = options.Duration or CONFIG.DEFAULT_DURATION
+    local notificationType = options.Type or "Info"
+    local callback = options.Callback
+    local closeOnClick = options.CloseOnClick
+    if closeOnClick == nil then closeOnClick = true end
+
+    local typeColor
+    if notificationType == "Success" then
+        typeColor = theme.SUCCESS
+    elseif notificationType == "Warning" then
+        typeColor = theme.WARNING
+    elseif notificationType == "Error" then
+        typeColor = theme.ERROR
+    else
+        typeColor = theme.INFO
+    end
+
+    local notificationFrame = Instance.new("Frame")
+    notificationFrame.Name = "Notification_" .. title:gsub("%s+", "_")
+    notificationFrame.BackgroundColor3 = theme.BACKGROUND
+    notificationFrame.BorderSizePixel = 0
+    notificationFrame.Size = UDim2.new(1, 0, 0, CONFIG.NOTIFICATION_HEIGHT)
+    notificationFrame.ClipsDescendants = true
+    notificationFrame.BackgroundTransparency = 0.1
+    notificationFrame.AnchorPoint = Vector2.new(0.5, 0)
+    notificationFrame.Position = UDim2.new(0.5, 0, 0, 0)
+
+    if theme.GRADIENT_ENABLED then
+        local gradient = Instance.new("UIGradient")
+        gradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, theme.BACKGROUND_SECONDARY),
+            ColorSequenceKeypoint.new(1, theme.BACKGROUND)
+        })
+        gradient.Rotation = 45
+        gradient.Parent = notificationFrame
+
+        if CONFIG.GRADIENT_ROTATION.ENABLED then
+            task.spawn(function()
+                local rotationDirection = 1
+                local rotationSpeed = CONFIG.GRADIENT_ROTATION.SPEED
+
+                while notificationFrame and notificationFrame.Parent do
+                    gradient.Rotation = (gradient.Rotation + rotationDirection * rotationSpeed * RunService.Heartbeat:Wait()) % 360
+                    if math.random(1, 1000) == 1 then
+                        rotationDirection = -rotationDirection
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+
+    local cornerRadius = Instance.new("UICorner")
+    cornerRadius.CornerRadius = CONFIG.CORNER_RADIUS
+    cornerRadius.Parent = notificationFrame
+
+    local glowBorder = Instance.new("UIStroke")
+    glowBorder.Name = "GlowBorder"
+    glowBorder.Color = typeColor
+    glowBorder.Thickness = 1.5
+    glowBorder.Transparency = 0.6
+    glowBorder.Parent = notificationFrame
+
+    if CONFIG.PULSE_EFFECT.ENABLED then
+        task.spawn(function()
+            while notificationFrame and notificationFrame.Parent do
+                local pulseInfo = TweenInfo.new(
+                    CONFIG.PULSE_EFFECT.DURATION,
+                    Enum.EasingStyle.Sine,
+                    Enum.EasingDirection.InOut,
+                    -1,
+                    true
+                )
+
+                local pulseTween = TweenService:Create(glowBorder, pulseInfo, {
+                    Transparency = CONFIG.PULSE_EFFECT.MIN_TRANSPARENCY
+                })
+
+                pulseTween:Play()
+
+                repeat task.wait(0.5) until not (notificationFrame and notificationFrame.Parent)
+                pulseTween:Cancel()
+                break
+            end
+        end)
+    end
+
+    local typeBorder = Instance.new("Frame")
+    typeBorder.Name = "TypeBorder"
+    typeBorder.BackgroundColor3 = typeColor
+    typeBorder.BorderSizePixel = 0
+    typeBorder.Size = UDim2.new(0, 4, 1, 0)
+    typeBorder.Position = UDim2.new(0, 0, 0, 0)
+    typeBorder.Parent = notificationFrame
+
+    local accentGlow = Instance.new("ImageLabel")
+    accentGlow.Name = "AccentGlow"
+    accentGlow.BackgroundTransparency = 1
+    accentGlow.Size = UDim2.new(0, 20, 1, 0)
+    accentGlow.Position = UDim2.new(0, 0, 0, 0)
+    accentGlow.Image = "rbxassetid://131426127"
+    accentGlow.ImageColor3 = typeColor
+    accentGlow.ImageTransparency = 0.7
+    accentGlow.ZIndex = 0
+    accentGlow.Parent = notificationFrame
+
+    local iconContainer = Instance.new("Frame")
+    iconContainer.Name = "IconContainer"
+    iconContainer.BackgroundTransparency = 1
+    iconContainer.Position = UDim2.new(0, 16, 0, 16)
+    iconContainer.Size = UDim2.new(0, 24, 0, 24)
+    iconContainer.Parent = notificationFrame
+
+    local statusIcon = Instance.new("ImageLabel")
+    statusIcon.Name = "StatusIcon"
+    statusIcon.BackgroundTransparency = 1
+    statusIcon.Size = UDim2.new(1, 0, 1, 0)
+    statusIcon.ImageTransparency = 1
+
+    if notificationType == "Success" then
+        statusIcon.Image = "rbxassetid://7733715400"
+    elseif notificationType == "Warning" then
+        statusIcon.Image = "rbxassetid://7733658271"
+    elseif notificationType == "Error" then
+        statusIcon.Image = "rbxassetid://7743878358"
+    else
+        statusIcon.Image = "rbxassetid://140353058114962"
+    end
+
+    statusIcon.ImageColor3 = typeColor
+    statusIcon.Parent = iconContainer
+
+    local iconGlow = statusIcon:Clone()
+    iconGlow.Name = "IconGlow"
+    iconGlow.ImageTransparency = 0.7
+    iconGlow.Size = UDim2.new(1.5, 0, 1.5, 0)
+    iconGlow.Position = UDim2.new(-0.25, 0, -0.25, 0)
+    iconGlow.ZIndex = statusIcon.ZIndex - 1
+    iconGlow.Parent = iconContainer
+
+    local titleText = Instance.new("TextLabel")
+    titleText.Name = "Title"
+    titleText.BackgroundTransparency = 1
+    titleText.Position = UDim2.new(0, 50, 0, 14)
+    titleText.Size = UDim2.new(1, -100, 0, 24)
+    titleText.Font = Enum.Font.GothamBold
+    titleText.Text = title
+    titleText.TextColor3 = theme.TEXT_PRIMARY
+    titleText.TextSize = 16
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.TextTransparency = 1
+    titleText.Parent = notificationFrame
+
+    local messageText = Instance.new("TextLabel")
+    messageText.Name = "Message"
+    messageText.BackgroundTransparency = 1
+    messageText.Position = UDim2.new(0, 50, 0, 38)
+    messageText.Size = UDim2.new(1, -70, 0, 36)
+    messageText.Font = Enum.Font.Gotham
+    messageText.Text = text
+    messageText.TextColor3 = theme.TEXT_SECONDARY
+    messageText.TextSize = 14
+    messageText.TextWrapped = true
+    messageText.TextXAlignment = Enum.TextXAlignment.Left
+    messageText.TextYAlignment = Enum.TextYAlignment.Top
+    messageText.TextTransparency = 1
+    messageText.Parent = notificationFrame
+
+    local closeButton = Instance.new("ImageButton")
+    closeButton.Name = "CloseButton"
+    closeButton.BackgroundTransparency = 1
+    closeButton.Position = UDim2.new(1, -32, 0, 14)
+    closeButton.Size = UDim2.new(0, 18, 0, 18)
+    closeButton.Image = "rbxassetid://7733717646"
+    closeButton.ImageColor3 = theme.TEXT_SECONDARY
+    closeButton.ImageTransparency = 1
+    closeButton.Parent = notificationFrame
+
+    closeButton.MouseEnter:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(0.2), {
+            ImageColor3 = typeColor
+        }):Play()
+    end)
+
+    closeButton.MouseLeave:Connect(function()
+        TweenService:Create(closeButton, TweenInfo.new(0.2), {
+            ImageColor3 = theme.TEXT_SECONDARY
+        }):Play()
+    end)
+
+    local shadowEffect = Instance.new("ImageLabel")
+    shadowEffect.Name = "Shadow"
+    shadowEffect.BackgroundTransparency = 1
+    shadowEffect.Size = UDim2.new(1, 20, 1, 20)
+    shadowEffect.Position = UDim2.new(0, -10, 0, 5)
+    shadowEffect.ZIndex = -1
+    shadowEffect.Image = "rbxassetid://7912134082"
+    shadowEffect.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadowEffect.ImageTransparency = theme.SHADOW_TRANSPARENCY
+    shadowEffect.ScaleType = Enum.ScaleType.Slice
+    shadowEffect.SliceCenter = Rect.new(25, 25, 65, 65)
+    shadowEffect.Parent = notificationFrame
+
+    if CONFIG.SHADOW_FLOAT.ENABLED then
+        task.spawn(function()
+            while notificationFrame and notificationFrame.Parent do
+                local floatInfo = TweenInfo.new(
+                    CONFIG.SHADOW_FLOAT.DURATION,
+                    Enum.EasingStyle.Sine,
+                    Enum.EasingDirection.InOut,
+                    -1,
+                    true
+                )
+
+                local floatTween = TweenService:Create(shadowEffect, floatInfo, {
+                    Position = UDim2.new(0, -10, 0, 8)
+                })
+
+                floatTween:Play()
+
+                repeat task.wait(0.5) until not (notificationFrame and notificationFrame.Parent)
+                floatTween:Cancel()
+                break
+            end
+        end)
+    end
+
+    -- Progress Bar
+    local progressBarContainer, progressBar, progressTween
+    
+    if CONFIG.PROGRESS_BAR.ENABLED then
+        local progressHeight = CONFIG.PROGRESS_BAR.HEIGHT or 3
+        
+        progressBarContainer = Instance.new("Frame")
+        progressBarContainer.Name = "ProgressBarContainer"
+        progressBarContainer.BackgroundTransparency = 1
+        progressBarContainer.Size = UDim2.new(1, 0, 0, progressHeight)
+        progressBarContainer.Position = UDim2.new(0, 0, 1, -progressHeight)
+        progressBarContainer.Parent = notificationFrame
+
+        progressBar = Instance.new("Frame")
+        progressBar.Name = "ProgressBar"
+        progressBar.BackgroundColor3 = typeColor
+        progressBar.BorderSizePixel = 0
+        progressBar.Size = UDim2.new(1, 0, 1, 0)
+        progressBar.Parent = progressBarContainer
+
+        if CONFIG.PROGRESS_BAR.ANIMATED_GRADIENT then
+            local progressGradient = Instance.new("UIGradient")
+            progressGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, typeColor),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(
+                    math.min(typeColor.R * 1.3 * 255, 255),
+                    math.min(typeColor.G * 1.3 * 255, 255),
+                    math.min(typeColor.B * 1.3 * 255, 255)
+                )),
+                ColorSequenceKeypoint.new(1, typeColor)
+            })
+            progressGradient.Parent = progressBar
+
+            local progressGlow = Instance.new("Frame")
+            progressGlow.Name = "ProgressGlow"
+            progressGlow.BackgroundColor3 = typeColor
+            progressGlow.BackgroundTransparency = 0.7
+            progressGlow.BorderSizePixel = 0
+            progressGlow.Size = UDim2.new(1, 0, 0, 6)
+            progressGlow.Position = UDim2.new(0, 0, 0, -3)
+            progressGlow.ZIndex = progressBar.ZIndex - 1
+            progressGlow.Parent = progressBar
+
+            local progressGlowCorner = Instance.new("UICorner")
+            progressGlowCorner.CornerRadius = UDim.new(1, 0)
+            progressGlowCorner.Parent = progressGlow
+
+            task.spawn(function()
+                while progressBar and progressBar.Parent do
+                    local offset = 0
+                    local moveSpeed = 1
+
+                    while true do
+                        offset = (offset + 0.01) % 1
+                        progressGradient.Offset = Vector2.new(offset, 0)
+
+                        if not (progressBar and progressBar.Parent) then
+                            break
+                        end
+
+                        task.wait(moveSpeed / 100)
+                    end
+
+                    break
+                end
+            end)
+        end
+    end
+
+    local wrapper = CreateAnimationWrapper(notificationsFrame, notificationFrame)
+
+    local entranceTween = GetEntranceAnimation(notificationFrame, wrapper)
+    local exitTween = GetExitAnimation(notificationFrame, wrapper)
+    
+    if CONFIG.PROGRESS_BAR.ENABLED and duration > 0 then
+        local progressTweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+        progressTween = TweenService:Create(progressBar, progressTweenInfo, {
+            Size = UDim2.new(0, 0, 1, 0)
+        })
+    end
+
+    local elementAppearInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+    local iconAppearTween = TweenService:Create(statusIcon, elementAppearInfo, {
+        ImageTransparency = 0,
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0)
+    })
+
+    local titleAppearTween = TweenService:Create(titleText, elementAppearInfo, {
+        TextTransparency = 0,
+        Position = UDim2.new(0, 50, 0, 14)
+    })
+
+    local messageAppearTween = TweenService:Create(messageText, elementAppearInfo, {
+        TextTransparency = 0,
+        Position = UDim2.new(0, 50, 0, 38)
+    })
+
+    local closeAppearTween = TweenService:Create(closeButton, elementAppearInfo, {
+        ImageTransparency = 0
+    })
+
+    statusIcon.Size = UDim2.new(0.5, 0, 0.5, 0)
+    statusIcon.Position = UDim2.new(0.25, 0, 0.25, 0)
+    titleText.Position = UDim2.new(0, 70, 0, 14)
+    messageText.Position = UDim2.new(0, 70, 0, 38)
+
+    notificationFrame.InputBegan:Connect(function(input)
+        local MouseLocation = game:GetService("UserInputService"):GetMouseLocation()
+        local RelativePosition = Vector2.new(
+            MouseLocation.X - notificationFrame.AbsolutePosition.X,
+            MouseLocation.Y - notificationFrame.AbsolutePosition.Y
+        )
+
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self:CreateRippleEffect(notificationFrame, RelativePosition.X, RelativePosition.Y, typeColor)
+
+            if callback then
+                callback()
+            end
+
+            if closeOnClick then
+                if progressTween then
+                    progressTween:Cancel()
+                end
+
+                local fadeOutInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+                local iconFadeOut = TweenService:Create(statusIcon, fadeOutInfo, {
+                    ImageTransparency = 1
+                })
+
+                local titleFadeOut = TweenService:Create(titleText, fadeOutInfo, {
+                    TextTransparency = 1
+                })
+
+                local messageFadeOut = TweenService:Create(messageText, fadeOutInfo, {
+                    TextTransparency = 1
+                })
+
+                iconFadeOut:Play()
+                titleFadeOut:Play()
+                messageFadeOut:Play()
+
+                task.delay(0.2, function()
+                    exitTween:Play()
+                    exitTween.Completed:Wait()
+                    if wrapper and wrapper.Parent then
+                        wrapper:Destroy()
+                    end
+                end)
+            end
+        end
+    end)
+
+    closeButton.MouseButton1Click:Connect(function()
+        if progressTween then
+            progressTween:Cancel()
+        end
+
+        self:CreateRippleEffect(notificationFrame, closeButton.AbsolutePosition.X, closeButton.AbsolutePosition.Y, typeColor)
+
+        local fadeOutInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+        local iconFadeOut = TweenService:Create(statusIcon, fadeOutInfo, {
+            ImageTransparency = 1,
+            Size = UDim2.new(0.5, 0, 0.5, 0),
+            Position = UDim2.new(0.25, 0, 0.25, 0)
+        })
+
+        local titleFadeOut = TweenService:Create(titleText, fadeOutInfo, {
+            TextTransparency = 1,
+            Position = UDim2.new(0, 70, 0, 14)
+        })
+
+        local messageFadeOut = TweenService:Create(messageText, fadeOutInfo, {
+            TextTransparency = 1,
+            Position = UDim2.new(0, 70, 0, 38)
+        })
+
+        iconFadeOut:Play()
+        titleFadeOut:Play()
+        messageFadeOut:Play()
+
+        task.delay(0.2, function()
+            exitTween:Play()
+            exitTween.Completed:Wait()
+            if wrapper and wrapper.Parent then
+                wrapper:Destroy()
+            end
+        end)
+    end)
+
+    entranceTween:Play()
+    entranceTween.Completed:Connect(function()
+        iconAppearTween:Play()
+
+        task.delay(CONFIG.TEXT_APPEAR_DELAY, function()
+            titleAppearTween:Play()
+        end)
+
+        task.delay(CONFIG.TEXT_APPEAR_DELAY * 2, function()
+            messageAppearTween:Play()
+        end)
+
+        task.delay(CONFIG.TEXT_APPEAR_DELAY * 3, function()
+            closeAppearTween:Play()
+            if progressTween then
+                progressTween:Play()
+            end
+        end)
+    end)
+
+    task.spawn(function()
+        if duration > 0 then
+            task.wait(duration)
+
+            if notificationFrame and notificationFrame.Parent then
+                local fadeOutInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+                local iconFadeOut = TweenService:Create(statusIcon, fadeOutInfo, {
+                    ImageTransparency = 1,
+                    Size = UDim2.new(0.5, 0, 0.5, 0),
+                    Position = UDim2.new(0.25, 0, 0.25, 0)
+                })
+
+                local titleFadeOut = TweenService:Create(titleText, fadeOutInfo, {
+                    TextTransparency = 1,
+                    Position = UDim2.new(0, 70, 0, 14)
+                })
+
+                local messageFadeOut = TweenService:Create(messageText, fadeOutInfo, {
+                    TextTransparency = 1,
+                    Position = UDim2.new(0, 70, 0, 38)
+                })
+
+                local closeButtonFadeOut = TweenService:Create(closeButton, fadeOutInfo, {
+                    ImageTransparency = 1
+                })
+
+                iconFadeOut:Play()
+                titleFadeOut:Play()
+                messageFadeOut:Play()
+                closeButtonFadeOut:Play()
+
+                task.delay(0.2, function()
+                    exitTween:Play()
+                    exitTween.Completed:Wait()
+                    if wrapper and wrapper.Parent then
+                        wrapper:Destroy()
+                    end
+                end)
+            end
+        end
+    end)
+
+    return {
+        Frame = notificationFrame,
+        Wrapper = wrapper,
+        Close = function()
+            if notificationFrame and notificationFrame.Parent then
+                if progressTween then
+                    progressTween:Cancel()
+                end
+                exitTween:Play()
+                exitTween.Completed:Wait()
+                if wrapper and wrapper.Parent then
+                    wrapper:Destroy()
+                end
+            end
+        end,
+        Update = function(newOptions)
+            if notificationFrame and notificationFrame.Parent then
+                if newOptions.Title then
+                    titleText.Text = newOptions.Title
+                end
+                if newOptions.Text then
+                    messageText.Text = newOptions.Text
+                end
+                if newOptions.Duration and CONFIG.PROGRESS_BAR.ENABLED then
+                    if progressTween then
+                        progressTween:Cancel()
+                    end
+                    progressBar.Size = UDim2.new(1, 0, 1, 0)
+                    progressTween = TweenService:Create(progressBar, TweenInfo.new(newOptions.Duration, Enum.EasingStyle.Linear), {
+                        Size = UDim2.new(0, 0, 1, 0)
+                    })
+                    progressTween:Play()
+                end
+            end
+        end
+    }
+end
+
+function NotificationLibrary:Notif(title, text, duration, type, callback)
+    return self:Notify({
+        Title = title,
+        Text = text,
+        Duration = duration,
+        Type = type or "Info",
+        Callback = callback
+    })
+end
+
+function NotificationLibrary:Toast(text, duration, notificationType)
+    return self:Notify({
+        Title = "",
+        Text = text,
+        Duration = duration or 3,
+        Type = notificationType or "Info",
+        CloseOnClick = true
+    })
+end
+
+function NotificationLibrary:Confirm(options)
+    local theme = GetTheme()
+    local title = options.Title or "Confirmation"
+    local text = options.Text or "Are you sure?"
+    local duration = options.Duration or 0
+    local onYes = options.OnYes or function() end
+    local onNo = options.OnNo or function() end
+    local yesText = options.YesText or "Yes"
+    local noText = options.NoText or "No"
+
+    local notification = self:Notify({
+        Title = title,
+        Text = text,
+        Duration = duration,
+        Type = "Info",
+        CloseOnClick = false
+    })
+
+    local notificationFrame = notification.Frame
+
+    TweenService:Create(notificationFrame, TweenInfo.new(0.2), {
+        Size = UDim2.new(1, 0, 0, 120)
+    }):Play()
+
+    local buttonContainer = Instance.new("Frame")
+    buttonContainer.Name = "ButtonContainer"
+    buttonContainer.BackgroundTransparency = 1
+    buttonContainer.Size = UDim2.new(1, -60, 0, 32)
+    buttonContainer.Position = UDim2.new(0, 50, 0, 80)
+    buttonContainer.Parent = notificationFrame
+
+    local yesButton = Instance.new("TextButton")
+    yesButton.Name = "YesButton"
+    yesButton.Size = UDim2.new(0.48, 0, 1, 0)
+    yesButton.Position = UDim2.new(0, 0, 0, 0)
+    yesButton.BackgroundColor3 = theme.SUCCESS
+    yesButton.BorderSizePixel = 0
+    yesButton.Font = Enum.Font.GothamBold
+    yesButton.Text = yesText
+    yesButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    yesButton.TextSize = 14
+    yesButton.AutoButtonColor = false
+    yesButton.ClipsDescendants = true
+    yesButton.Parent = buttonContainer
+
+    local noButton = Instance.new("TextButton")
+    noButton.Name = "NoButton"
+    noButton.Size = UDim2.new(0.48, 0, 1, 0)
+    noButton.Position = UDim2.new(0.52, 0, 0, 0)
+    noButton.BackgroundColor3 = theme.ERROR
+    noButton.BorderSizePixel = 0
+    noButton.Font = Enum.Font.GothamBold
+    noButton.Text = noText
+    noButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    noButton.TextSize = 14
+    noButton.AutoButtonColor = false
+    noButton.ClipsDescendants = true
+    noButton.Parent = buttonContainer
+
+    local yesCorner = Instance.new("UICorner")
+    yesCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    yesCorner.Parent = yesButton
+
+    local noCorner = Instance.new("UICorner")
+    noCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    noCorner.Parent = noButton
+
+    local function setupButtonEffects(button, color)
+        button.MouseEnter:Connect(function()
+            local hoverTween = TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0.48, 0, 1, -4),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, -2)
+            })
+            hoverTween:Play()
+
+            TweenService:Create(button, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.min(color.R * 1.1 * 255, 255),
+                    math.min(color.G * 1.1 * 255, 255),
+                    math.min(color.B * 1.1 * 255, 255)
+                )
+            }):Play()
+        end)
+
+        button.MouseLeave:Connect(function()
+            local resetTween = TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0.48, 0, 1, 0),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, 0)
+            })
+            resetTween:Play()
+
+            TweenService:Create(button, TweenInfo.new(0.2), {
+                BackgroundColor3 = color
+            }):Play()
+        end)
+
+        button.MouseButton1Down:Connect(function()
+            local clickTween = TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(0.48, 0, 1, -6),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, 3)
+            })
+            clickTween:Play()
+
+            TweenService:Create(button, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.max(color.R * 0.9 * 255, 0),
+                    math.max(color.G * 0.9 * 255, 0),
+                    math.max(color.B * 0.9 * 255, 0)
+                )
+            }):Play()
+        end)
+
+        button.MouseButton1Up:Connect(function()
+            local releaseTween = TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(0.48, 0, 1, -4),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, -2)
+            })
+            releaseTween:Play()
+
+            TweenService:Create(button, TweenInfo.new(0.1), {
+                BackgroundColor3 = color
+            }):Play()
+        end)
+    end
+
+    setupButtonEffects(yesButton, theme.SUCCESS)
+    setupButtonEffects(noButton, theme.ERROR)
+
+    yesButton.MouseButton1Click:Connect(function()
+        local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+        local buttonPos = yesButton.AbsolutePosition
+        local relX = mousePos.X - buttonPos.X
+        local relY = mousePos.Y - buttonPos.Y
+        self:CreateRippleEffect(yesButton, relX, relY, Color3.fromRGB(255, 255, 255))
+
+        task.spawn(onYes)
+        notification.Close()
+    end)
+
+    noButton.MouseButton1Click:Connect(function()
+        local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+        local buttonPos = noButton.AbsolutePosition
+        local relX = mousePos.X - buttonPos.X
+        local relY = mousePos.Y - buttonPos.Y
+        self:CreateRippleEffect(noButton, relX, relY, Color3.fromRGB(255, 255, 255))
+
+        task.spawn(onNo)
+        notification.Close()
+    end)
+
+    return notification
+end
+
+function NotificationLibrary:Input(options)
+    local theme = GetTheme()
+    local title = options.Title or "Input"
+    local text = options.Text or "Please enter a value:"
+    local type = options.Type or "Info"
+    local inputType = options.InputType or "Text"
+    local placeholderText = options.PlaceholderText or "Enter value here..."
+    local confirmText = options.ConfirmText or "Submit"
+    local cancelText = options.CancelText or "Cancel"
+    local onConfirm = options.OnConfirm or function() end
+    local onCancel = options.OnCancel or function() end
+    local defaultValue = options.DefaultValue or ""
+
+    local notification = self:Notify({
+        Title = title,
+        Text = text,
+        Duration = 0,
+        Type = type,
+        CloseOnClick = false
+    })
+
+    local notificationFrame = notification.Frame
+
+    TweenService:Create(notificationFrame, TweenInfo.new(0.2), {
+        Size = UDim2.new(1, 0, 0, 175)
+    }):Play()
+
+    local inputContainer = Instance.new("Frame")
+    inputContainer.Name = "InputContainer"
+    inputContainer.BackgroundColor3 = theme.BACKGROUND_SECONDARY
+    inputContainer.BorderSizePixel = 0
+    inputContainer.Size = UDim2.new(1, -60, 0, 36)
+    inputContainer.Position = UDim2.new(0, 50, 0, 80)
+    inputContainer.Parent = notificationFrame
+
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    inputCorner.Parent = inputContainer
+
+    local inputBoxHolder = Instance.new("Frame")
+    inputBoxHolder.Name = "InputBoxHolder"
+    inputBoxHolder.BackgroundTransparency = 1
+    inputBoxHolder.Size = UDim2.new(1, 0, 1, 0)
+    inputBoxHolder.Position = UDim2.new(0, 0, 0, 0)
+    inputBoxHolder.Parent = inputContainer
+
+    local inputBox = Instance.new("TextBox")
+    inputBox.Name = "InputBox"
+    inputBox.BackgroundTransparency = 1
+    inputBox.Size = UDim2.new(1, -20, 1, 0)
+    inputBox.Position = UDim2.new(0, 10, 0, 0)
+    inputBox.Font = Enum.Font.Gotham
+    inputBox.PlaceholderText = placeholderText
+    inputBox.PlaceholderColor3 = theme.TEXT_SECONDARY
+    inputBox.Text = defaultValue
+    inputBox.TextColor3 = theme.TEXT_PRIMARY
+    inputBox.TextSize = 14
+    inputBox.TextXAlignment = Enum.TextXAlignment.Left
+    inputBox.ClearTextOnFocus = false
+    inputBox.MultiLine = false
+    inputBox.TextWrapped = false
+    inputBox.MaxVisibleGraphemes = -1
+    inputBox.Parent = inputBoxHolder
+
+    local actualValue = defaultValue
+    
+    local function getValue()
+        if inputType == "Password" or inputType == "Number" then
+            if type(actualValue) == "function" then
+                return actualValue()
+            end
+        end
+        return inputBox.Text
+    end
+
+    if inputType == "Password" then
+        local passwordValue = ""
+        if defaultValue ~= "" then
+            passwordValue = defaultValue
+            inputBox.Text = string.rep("•", #defaultValue)
+        end
+
+        inputBox.TextEditable = true
+
+        local userInputService = game:GetService("UserInputService")
+        local textboxConnection
+
+        textboxConnection = userInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Keyboard and inputBox:IsFocused() then
+                if input.KeyCode == Enum.KeyCode.Backspace then
+                    if #passwordValue > 0 then
+                        passwordValue = string.sub(passwordValue, 1, -2)
+                        inputBox.Text = string.rep("•", #passwordValue)
+                    end
+                end
+            end
+        end)
+
+        inputBox.FocusLost:Connect(function()
+            if textboxConnection then
+                textboxConnection:Disconnect()
+            end
+        end)
+
+        inputBox:GetPropertyChangedSignal("Text"):Connect(function()
+            local currentText = inputBox.Text
+            local bulletsCount = select(2, string.gsub(currentText, "•", ""))
+
+            if #currentText > bulletsCount then
+                local newChars = string.sub(currentText, bulletsCount + 1)
+                passwordValue = passwordValue .. newChars
+            end
+
+            task.defer(function()
+                inputBox.Text = string.rep("•", #passwordValue)
+            end)
+        end)
+
+        actualValue = function()
+            return passwordValue
+        end
+    end
+
+    if inputType == "Number" then
+        local numberValue = defaultValue
+
+        inputBox:GetPropertyChangedSignal("Text"):Connect(function()
+            local newText = inputBox.Text
+            local filteredText = ""
+
+            local hasDecimal = false
+            for i = 1, #newText do
+                local char = string.sub(newText, i, i)
+                if (char >= "0" and char <= "9") then
+                    filteredText = filteredText .. char
+                elseif char == "." and not hasDecimal then
+                    filteredText = filteredText .. char
+                    hasDecimal = true
+                end
+            end
+
+            if filteredText ~= newText then
+                local cursorPos = inputBox.CursorPosition
+                inputBox.Text = filteredText
+                inputBox.CursorPosition = math.min(cursorPos, #filteredText + 1)
+            end
+
+            numberValue = filteredText
+        end)
+
+        actualValue = function()
+            return tonumber(numberValue) or 0
+        end
+    end
+
+    local buttonContainer = Instance.new("Frame")
+    buttonContainer.Name = "ButtonContainer"
+    buttonContainer.BackgroundTransparency = 1
+    buttonContainer.Size = UDim2.new(1, -60, 0, 32)
+    buttonContainer.Position = UDim2.new(0, 50, 0, 125)
+    buttonContainer.Parent = notificationFrame
+
+    local confirmButton = Instance.new("TextButton")
+    confirmButton.Name = "ConfirmButton"
+    confirmButton.Size = UDim2.new(0.48, 0, 1, 0)
+    confirmButton.Position = UDim2.new(0, 0, 0, 0)
+    confirmButton.BackgroundColor3 = theme.INFO
+    confirmButton.BorderSizePixel = 0
+    confirmButton.Font = Enum.Font.GothamBold
+    confirmButton.Text = confirmText
+    confirmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    confirmButton.TextSize = 14
+    confirmButton.AutoButtonColor = false
+    confirmButton.ClipsDescendants = true
+    confirmButton.Parent = buttonContainer
+
+    local cancelButton = Instance.new("TextButton")
+    cancelButton.Name = "CancelButton"
+    cancelButton.Size = UDim2.new(0.48, 0, 1, 0)
+    cancelButton.Position = UDim2.new(0.52, 0, 0, 0)
+    cancelButton.BackgroundColor3 = theme.ACCENT
+    cancelButton.BorderSizePixel = 0
+    cancelButton.Font = Enum.Font.GothamBold
+    cancelButton.Text = cancelText
+    cancelButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    cancelButton.TextSize = 14
+    cancelButton.AutoButtonColor = false
+    cancelButton.ClipsDescendants = true
+    cancelButton.Parent = buttonContainer
+
+    local confirmCorner = Instance.new("UICorner")
+    confirmCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    confirmCorner.Parent = confirmButton
+
+    local cancelCorner = Instance.new("UICorner")
+    cancelCorner.CornerRadius = CONFIG.CORNER_RADIUS
+    cancelCorner.Parent = cancelButton
+
+    local function setupButtonEffects(button, color)
+        button.MouseEnter:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0.48, 0, 1, -4),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, -2)
+            }):Play()
+
+            TweenService:Create(button, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.min(color.R * 1.1 * 255, 255),
+                    math.min(color.G * 1.1 * 255, 255),
+                    math.min(color.B * 1.1 * 255, 255)
+                )
+            }):Play()
+        end)
+
+        button.MouseLeave:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0.48, 0, 1, 0),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, 0)
+            }):Play()
+
+            TweenService:Create(button, TweenInfo.new(0.2), {
+                BackgroundColor3 = color
+            }):Play()
+        end)
+
+        button.MouseButton1Down:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(0.48, 0, 1, -6),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, 3)
+            }):Play()
+
+            TweenService:Create(button, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(
+                    math.max(color.R * 0.9 * 255, 0),
+                    math.max(color.G * 0.9 * 255, 0),
+                    math.max(color.B * 0.9 * 255, 0)
+                )
+            }):Play()
+        end)
+
+        button.MouseButton1Up:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(0.48, 0, 1, -4),
+                Position = UDim2.new(button.Position.X.Scale, 0, 0, -2)
+            }):Play()
+
+            TweenService:Create(button, TweenInfo.new(0.1), {
+                BackgroundColor3 = color
+            }):Play()
+        end)
+    end
+
+    setupButtonEffects(confirmButton, theme.INFO)
+    setupButtonEffects(cancelButton, theme.ACCENT)
+
+    confirmButton.MouseButton1Click:Connect(function()
+        local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+        local buttonPos = confirmButton.AbsolutePosition
+        local relX = mousePos.X - buttonPos.X
+        local relY = mousePos.Y - buttonPos.Y
+        self:CreateRippleEffect(confirmButton, relX, relY, Color3.fromRGB(255, 255, 255))
+
+        local value = getValue()
+
+        task.spawn(function()
+            onConfirm(value)
+        end)
+
+        notification.Close()
+    end)
+
+    cancelButton.MouseButton1Click:Connect(function()
+        local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+        local buttonPos = cancelButton.AbsolutePosition
+        local relX = mousePos.X - buttonPos.X
+        local relY = mousePos.Y - buttonPos.Y
+        self:CreateRippleEffect(cancelButton, relX, relY, Color3.fromRGB(255, 255, 255))
+
+        task.spawn(onCancel)
+        notification.Close()
+    end)
+
+    task.delay(0.1, function()
+        if inputBox and inputBox.Parent then
+            inputBox:CaptureFocus()
+        end
+    end)
+
+    inputBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local value = getValue()
+
+            task.spawn(function()
+                onConfirm(value)
+            end)
+
+            notification.Close()
+        end
+    end)
+
+    return notification
+end
+
+function NotificationLibrary:CloseAll()
+    local container = self:Init()
+    local notificationsFrame = container.NotificationsFrame
+
+    for _, child in ipairs(notificationsFrame:GetChildren()) do
+        if child:IsA("Frame") and child.Name == "AnimationWrapper" then
+            local notificationFrame = child:FindFirstChildOfClass("Frame")
+            
+            if notificationFrame then
+                local fadeOutInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+                local statusIcon = notificationFrame:FindFirstChild("IconContainer") and 
+                    notificationFrame.IconContainer:FindFirstChild("StatusIcon")
+
+                local titleText = notificationFrame:FindFirstChild("Title")
+                local messageText = notificationFrame:FindFirstChild("Message")
+                local closeButton = notificationFrame:FindFirstChild("CloseButton")
+
+                if statusIcon then
+                    TweenService:Create(statusIcon, fadeOutInfo, {
+                        ImageTransparency = 1
+                    }):Play()
+                end
+
+                if titleText then
+                    TweenService:Create(titleText, fadeOutInfo, {
+                        TextTransparency = 1
+                    }):Play()
+                end
+
+                if messageText then
+                    TweenService:Create(messageText, fadeOutInfo, {
+                        TextTransparency = 1
+                    }):Play()
+                end
+
+                if closeButton then
+                    TweenService:Create(closeButton, fadeOutInfo, {
+                        ImageTransparency = 1
+                    }):Play()
+                end
+
+                task.delay(0.2, function()
+                    local exitTween = GetExitAnimation(notificationFrame, child)
+                    exitTween:Play()
+                    exitTween.Completed:Wait()
+                    if child and child.Parent then
+                        child:Destroy()
+                    end
+                end)
+            end
+        end
+    end
+end
+
+-- ============================================================================
+-- CONFIGURATION FUNCTIONS
+-- ============================================================================
+
+function NotificationLibrary:SetTheme(themeName)
+    if CONFIG.THEMES[themeName] then
+        CONFIG.CURRENT_THEME = themeName
+        return true
+    else
+        warn("[NotificationLibary]: Theme '" .. themeName .. "' does not exist!")
+        return false
+    end
+end
+
+function NotificationLibrary:GetTheme()
+    return CONFIG.CURRENT_THEME
+end
+
+function NotificationLibrary:GetAvailableThemes()
+    local themes = {}
+    for name, _ in pairs(CONFIG.THEMES) do
+        table.insert(themes, name)
+    end
+    return themes
+end
+
+function NotificationLibrary:CreateCustomTheme(name, themeData)
+    CONFIG.THEMES[name] = {
+        BACKGROUND = themeData.BACKGROUND or Color3.fromRGB(35, 35, 35),
+        BACKGROUND_SECONDARY = themeData.BACKGROUND_SECONDARY or Color3.fromRGB(55, 55, 55),
+        TEXT_PRIMARY = themeData.TEXT_PRIMARY or Color3.fromRGB(255, 255, 255),
+        TEXT_SECONDARY = themeData.TEXT_SECONDARY or Color3.fromRGB(200, 200, 200),
+        SUCCESS = themeData.SUCCESS or Color3.fromRGB(76, 175, 80),
+        WARNING = themeData.WARNING or Color3.fromRGB(255, 193, 7),
+        ERROR = themeData.ERROR or Color3.fromRGB(244, 67, 54),
+        INFO = themeData.INFO or Color3.fromRGB(33, 150, 243),
+        ACCENT = themeData.ACCENT or Color3.fromRGB(100, 100, 100),
+        SHADOW_TRANSPARENCY = themeData.SHADOW_TRANSPARENCY or 0.7,
+        GRADIENT_ENABLED = themeData.GRADIENT_ENABLED ~= nil and themeData.GRADIENT_ENABLED or true
+    }
+    return true
+end
+
+function NotificationLibrary:SetPosition(position)
+    local validPositions = {
+        "TopRight", "TopLeft", "BottomRight", "BottomLeft",
+        "Top", "Bottom", "Center", "Left", "Right"
+    }
+    
+    for _, validPos in ipairs(validPositions) do
+        if position == validPos then
+            CONFIG.POSITION = position
+            
+            local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+            if PlayerGui:FindFirstChild("NotificationContainer") then
+                local container = PlayerGui.NotificationContainer
+                local frame = container.NotificationsFrame
+                
+                local anchorPoint, udimPosition = CalculatePosition()
+                frame.AnchorPoint = anchorPoint
+                frame.Position = udimPosition
+                
+                local listLayout = frame:FindFirstChild("ListLayout")
+                if listLayout then
+                    if CONFIG.POSITION:find("Bottom") then
+                        listLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+                    else
+                        listLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+                    end
+                end
+            end
+            
+            return true
+        end
+    end
+    
+    warn("[NotificationLibary]: Invalid position! Valid positions are: " .. table.concat(validPositions, ", "))
+    return false
+end
+
+function NotificationLibrary:SetAnimationStyle(entrance, exit)
+    local validAnimations = {"Slide", "Fade", "Scale", "Bounce", "Drop", "Rise"}
+    
+    if entrance then
+        for _, anim in ipairs(validAnimations) do
+            if entrance == anim then
+                CONFIG.ENTRANCE_ANIMATION = entrance
+                break
+            end
+        end
+    end
+    
+    if exit then
+        local validExitAnimations = {"Slide", "Fade", "Scale"}
+        for _, anim in ipairs(validExitAnimations) do
+            if exit == anim then
+                CONFIG.EXIT_ANIMATION = exit
+                break
+            end
+        end
+    end
+end
+
+function NotificationLibrary:SetConfig(configTable)
+    for key, value in pairs(configTable) do
+        if CONFIG[key] ~= nil then
+            if type(CONFIG[key]) == "table" and type(value) == "table" then
+                for subKey, subValue in pairs(value) do
+                    CONFIG[key][subKey] = subValue
+                end
+            else
+                CONFIG[key] = value
+            end
+        end
+    end
+end
+
+function NotificationLibrary:GetConfig()
+    return CONFIG
+end
+
+return NotificationLibrary
