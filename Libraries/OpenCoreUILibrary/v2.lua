@@ -55,7 +55,7 @@ local OpenCore = {
 			Border = Color3.fromRGB(40, 40, 40),
 			Hover = Color3.fromRGB(35, 35, 35),
 			SliderFill = Color3.fromRGB(255, 255, 255),
-			
+
 			ToggleFill = Color3.fromRGB(25, 25, 25)
 		},
 		Light = {
@@ -76,7 +76,7 @@ local OpenCore = {
 			Border = Color3.fromRGB(220, 220, 220),
 			Hover = Color3.fromRGB(235, 235, 235),
 			SliderFill = Color3.fromRGB(59, 130, 246),
-			
+
 			ToggleFill = Color3.fromRGB(202, 202, 202)
 		},
 	}
@@ -657,10 +657,10 @@ function OpenCore:CreateWindow(config)
 		MakeDraggable(main, topBar)
 
 		-- CreateTab
-		function Window:_CreateTab(tabConfig)
+		function Window:CreateTab(tabConfig)
 			tabConfig = tabConfig or {}
 			tabConfig.Name = tabConfig.Name or "Tab"
-			tabConfig.Icon = tabConfig.Icon or "📄"
+			tabConfig.Icon = tabConfig.Icon or "11326672785"
 
 			local Tab = {
 				Sections = {}
@@ -1415,7 +1415,7 @@ function OpenCore:CreateWindow(config)
 					AddCorner(colorPreview, 4)
 					AddStroke(colorPreview, Theme.Border, 1, 0)
 
-          local panel = Instance.new("Frame")
+					local panel = Instance.new("Frame")
 					panel.BackgroundTransparency = 1
 					panel.Position = UDim2.new(0, 0, 0, 40)
 					panel.Size = UDim2.new(1, 0, 0, 200)
@@ -1954,7 +1954,7 @@ function OpenCore:CreateTheme(themeName, themeData)
 		"Background", "Surface", "Card",
 		"Text", "SubText", "Muted",
 		"Success", "Border", "Hover", "SliderFill", 
-    "ToggleFill"
+		"ToggleFill"
 	}
 
 	for _, prop in ipairs(requiredProps) do
