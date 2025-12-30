@@ -1803,6 +1803,7 @@ function OpenCore:CreateWindow(config)
 					keyBindConfig.Flag = keyBindConfig.Flag or nil
 					keyBindConfig.Callback = keyBindConfig.Callback or function() end
 					keyBindConfig.OnKeyPressed = keyBindConfig.OnKeyPressed or function() end
+					keyBindConfig.Clicks = keyBindConfig.Clicks or false -- Enable mouse clicks
 				
 					local selectedKey = keyBindConfig.Default
 					local listening = false
@@ -1844,7 +1845,7 @@ function OpenCore:CreateWindow(config)
 					keyButton.Position = UDim2.new(1, -12, 0.5, 0)
 					keyButton.Size = UDim2.new(0, 90, 0, 26)
 					keyButton.Font = Enum.Font.GothamBold
-					keyButton.Text = selectedKey.Name
+					keyButton.Text = selectedKey.Name or "None"
 					keyButton.TextColor3 = Theme.Text
 					keyButton.TextSize = 12
 					keyButton.Parent = keyBindFrame
@@ -1853,6 +1854,19 @@ function OpenCore:CreateWindow(config)
 					AddStroke(keyButton, Theme.Border, 1, 0)
 				
 					local function formatKeyName(keyCode)
+						if not keyCode or keyCode == "None" then
+							return "None"
+						end
+						
+						if typeof(keyCode) == "EnumItem" and tostring(keyCode.EnumType) == "UserInputType" then
+							local name = keyCode.Name
+							if name == "MouseButton1" then return "LMB"
+							elseif name == "MouseButton2" then return "RMB"
+							elseif name == "MouseButton3" then return "MMB"
+							end
+							return name
+						end
+						
 						local name = keyCode.Name
 						
 						if name == "LeftShift" or name == "RightShift" then
@@ -1901,6 +1915,22 @@ function OpenCore:CreateWindow(config)
 							if input.UserInputType == Enum.UserInputType.Keyboard then
 								local keyCode = input.KeyCode
 								
+								if keyCode == Enum.KeyCode.Escape then
+									selectedKey = "None"
+									keyButton.Text = "None"
+									
+									if keyBindConfig.Flag then
+										OpenCore.Flags[keyBindConfig.Flag] = "None"
+									end
+									
+									task.spawn(function()
+										pcall(keyBindConfig.Callback, "None")
+									end)
+									
+									stopListening()
+									return
+								end
+								
 								if blacklistedKeys[keyCode] then
 									keyButton.Text = "Invalid!"
 									task.wait(0.5)
@@ -1919,6 +1949,24 @@ function OpenCore:CreateWindow(config)
 								end)
 								
 								stopListening()
+							
+							elseif keyBindConfig.Clicks then
+								if input.UserInputType == Enum.UserInputType.MouseButton1 or
+								   input.UserInputType == Enum.UserInputType.MouseButton2 or
+								   input.UserInputType == Enum.UserInputType.MouseButton3 then
+									
+									selectedKey = input.UserInputType
+									
+									if keyBindConfig.Flag then
+										OpenCore.Flags[keyBindConfig.Flag] = selectedKey
+									end
+									
+									task.spawn(function()
+										pcall(keyBindConfig.Callback, selectedKey)
+									end)
+									
+									stopListening()
+								end
 							end
 						end)
 						
@@ -1946,15 +1994,29 @@ function OpenCore:CreateWindow(config)
 				
 					local hotkeyConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
 						if gameProcessed then return end
+						if selectedKey == "None" then return end
 						
 						if input.UserInputType == Enum.UserInputType.Keyboard then
-							if input.KeyCode == selectedKey then
-								task.spawn(function()
-									pcall(keyBindConfig.OnKeyPressed)
-								end)
+							if typeof(selectedKey) == "EnumItem" and selectedKey.EnumType == Enum.KeyCode then
+								if input.KeyCode == selectedKey then
+									task.spawn(function()
+										pcall(keyBindConfig.OnKeyPressed)
+									end)
+								end
+							end
+						
+						elseif keyBindConfig.Clicks then
+							if typeof(selectedKey) == "EnumItem" and tostring(selectedKey.EnumType) == "UserInputType" then
+								if input.UserInputType == selectedKey then
+									task.spawn(function()
+										pcall(keyBindConfig.OnKeyPressed)
+									end)
+								end
 							end
 						end
 					end)
+				
+					keyButton.Text = formatKeyName(selectedKey)
 				
 					return {
 						Set = function(self, keyCode)
