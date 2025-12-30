@@ -459,7 +459,7 @@ function OpenCore:CreateWindow(config)
 		while not self._initialized do
 			task.wait(0.1)
 		end
-		return self._CreateTab(...)
+		return self.CreateTab(...)
 	end
 
 	local function InitializeWindow()
