@@ -1795,6 +1795,189 @@ function OpenCore:CreateWindow(config)
 					}
 				end
 
+				-- KeyBind
+				function Section:KeyBind(keyBindConfig)
+					keyBindConfig = keyBindConfig or {}
+					keyBindConfig.Name = keyBindConfig.Name or "KeyBind"
+					keyBindConfig.Default = keyBindConfig.Default or Enum.KeyCode.E
+					keyBindConfig.Flag = keyBindConfig.Flag or nil
+					keyBindConfig.Callback = keyBindConfig.Callback or function() end
+					keyBindConfig.OnKeyPressed = keyBindConfig.OnKeyPressed or function() end
+				
+					local selectedKey = keyBindConfig.Default
+					local listening = false
+					local connection = nil
+				
+					local blacklistedKeys = {
+						[Enum.KeyCode.Unknown] = true,
+						[Enum.KeyCode.W] = true,
+						[Enum.KeyCode.A] = true,
+						[Enum.KeyCode.S] = true,
+						[Enum.KeyCode.D] = true,
+						[Enum.KeyCode.Space] = true,
+					}
+				
+					local keyBindFrame = Instance.new("Frame")
+					keyBindFrame.BackgroundColor3 = Theme.Surface
+					keyBindFrame.BorderSizePixel = 0
+					keyBindFrame.Size = UDim2.new(1, 0, 0, 35)
+					keyBindFrame.Parent = elements
+				
+					AddCorner(keyBindFrame, 4)
+					AddStroke(keyBindFrame, Theme.Border, 1, 0)
+				
+					local label = Instance.new("TextLabel")
+					label.BackgroundTransparency = 1
+					label.Font = Enum.Font.GothamMedium
+					label.Text = keyBindConfig.Name
+					label.TextColor3 = Theme.Text
+					label.TextSize = 13
+					label.Position = UDim2.new(0, 12, 0, 0)
+					label.Size = UDim2.new(1, -110, 1, 0)
+					label.TextXAlignment = Enum.TextXAlignment.Left
+					label.Parent = keyBindFrame
+				
+					local keyButton = Instance.new("TextButton")
+					keyButton.AnchorPoint = Vector2.new(1, 0.5)
+					keyButton.BackgroundColor3 = Theme.Card
+					keyButton.BorderSizePixel = 0
+					keyButton.Position = UDim2.new(1, -12, 0.5, 0)
+					keyButton.Size = UDim2.new(0, 90, 0, 26)
+					keyButton.Font = Enum.Font.GothamBold
+					keyButton.Text = selectedKey.Name
+					keyButton.TextColor3 = Theme.Text
+					keyButton.TextSize = 12
+					keyButton.Parent = keyBindFrame
+				
+					AddCorner(keyButton, 4)
+					AddStroke(keyButton, Theme.Border, 1, 0)
+				
+					local function formatKeyName(keyCode)
+						local name = keyCode.Name
+						
+						if name == "LeftShift" or name == "RightShift" then
+							return "Shift"
+						elseif name == "LeftControl" or name == "RightControl" then
+							return "Ctrl"
+						elseif name == "LeftAlt" or name == "RightAlt" then
+							return "Alt"
+						elseif name == "Return" then
+							return "Enter"
+						elseif name == "Backspace" then
+							return "Back"
+						elseif name:match("^Numpad") then
+							return name:gsub("Numpad", "Num")
+						end
+						
+						return name
+					end
+				
+					local function stopListening()
+						listening = false
+						keyButton.Text = formatKeyName(selectedKey)
+						Tween(keyButton, {BackgroundColor3 = Theme.Card}, 0.2)
+						Tween(keyButton, {TextColor3 = Theme.Text}, 0.2)
+						
+						if connection then
+							connection:Disconnect()
+							connection = nil
+						end
+					end
+				
+					local function startListening()
+						if listening then
+							stopListening()
+							return
+						end
+						
+						listening = true
+						keyButton.Text = "..."
+						Tween(keyButton, {BackgroundColor3 = Theme.Success}, 0.2)
+						Tween(keyButton, {TextColor3 = Color3.fromRGB(255, 255, 255)}, 0.2)
+						
+						connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+							if not listening then return end
+							
+							if input.UserInputType == Enum.UserInputType.Keyboard then
+								local keyCode = input.KeyCode
+								
+								if blacklistedKeys[keyCode] then
+									keyButton.Text = "Invalid!"
+									task.wait(0.5)
+									stopListening()
+									return
+								end
+								
+								selectedKey = keyCode
+								
+								if keyBindConfig.Flag then
+									OpenCore.Flags[keyBindConfig.Flag] = selectedKey
+								end
+								
+								task.spawn(function()
+									pcall(keyBindConfig.Callback, selectedKey)
+								end)
+								
+								stopListening()
+							end
+						end)
+						
+						task.spawn(function()
+							task.wait(5)
+							if listening then
+								stopListening()
+							end
+						end)
+					end
+				
+					keyButton.MouseButton1Click:Connect(startListening)
+				
+					keyButton.MouseEnter:Connect(function()
+						if not listening then
+							Tween(keyButton, {BackgroundColor3 = Theme.Hover}, 0.15)
+						end
+					end)
+				
+					keyButton.MouseLeave:Connect(function()
+						if not listening then
+							Tween(keyButton, {BackgroundColor3 = Theme.Card}, 0.15)
+						end
+					end)
+				
+					local hotkeyConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+						if gameProcessed then return end
+						
+						if input.UserInputType == Enum.UserInputType.Keyboard then
+							if input.KeyCode == selectedKey then
+								task.spawn(function()
+									pcall(keyBindConfig.OnKeyPressed)
+								end)
+							end
+						end
+					end)
+				
+					return {
+						Set = function(self, keyCode)
+							selectedKey = keyCode
+							keyButton.Text = formatKeyName(selectedKey)
+							if keyBindConfig.Flag then
+								OpenCore.Flags[keyBindConfig.Flag] = selectedKey
+							end
+						end,
+						Get = function(self)
+							return selectedKey
+						end,
+						Disconnect = function(self)
+							if hotkeyConnection then
+								hotkeyConnection:Disconnect()
+							end
+							if connection then
+								connection:Disconnect()
+							end
+						end
+					}
+				end
+
 
 				return Section
 			end
@@ -1803,7 +1986,7 @@ function OpenCore:CreateWindow(config)
 		end
 
 		Window._initialized = true
-	end -- End of InitializeWindow
+	end
 
 	-- KEY SYSTEM CHECK
 	if config.KeySystem then
