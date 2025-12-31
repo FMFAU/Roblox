@@ -220,7 +220,7 @@ local function CreateKeySystem(config, callback, theme)
 	Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 	Overlay.BackgroundTransparency = 0.5
 	Overlay.BorderSizePixel = 0
-	Overlay.Size = UDim2.new(1, 1000, 1, 1000)
+	Overlay.Size = UDim2.new(1.5, 0, 1.5, 0)
 	Overlay.Parent = KeySystemGui
 
 	local MainFrame = Instance.new("Frame")
