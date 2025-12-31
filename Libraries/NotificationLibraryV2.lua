@@ -397,12 +397,32 @@ local function GetExitAnimation(frame, wrapper)
     return TweenService:Create(frame, tweenInfo, properties)
 end
 
+local function GetGuiParent()
+	local success, result = pcall(function()
+		return game:GetService("CoreGui")
+	end)
+
+	if success and result then
+		local test = Instance.new("Folder")
+		local canUse = pcall(function()
+			test.Parent = result
+			test:Destroy()
+		end)
+
+		if canUse then
+			return result
+		end
+	end
+
+	return Players.LocalPlayer:WaitForChild("PlayerGui")
+end
+
 -- ============================================================================
 -- CORE FUNCTIONS
 -- ============================================================================
 
 function NotificationLibrary:Init()
-    local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local PlayerGui = GetGuiParent()
 
     if PlayerGui:FindFirstChild("NotificationContainer") then
         local container = PlayerGui.NotificationContainer
