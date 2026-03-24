@@ -443,10 +443,21 @@ function OpenCore:CreateWindow(config)
 	config.Subtitle = config.Subtitle or "Modern UI Library"
 	config.Size = config.Size or UDim2.new(0, 700, 0, 550)
 	config.Theme = config.Theme or "Dark"
+	config.Font = config.Font or Enum.Font.Gotham
 
 	-- Set theme
 	OpenCore.CurrentTheme = config.Theme
 	Theme = OpenCore.Themes[OpenCore.CurrentTheme]
+	
+	-- Font fallback helper
+	local function GetFont(fontType)
+		local fonts = {
+			Bold = config.Font == Enum.Font.Gotham and Enum.Font.GothamBold or (config.Font == Enum.Font.SourceSans and Enum.Font.SourceSansBold or Enum.Font.GothamBold),
+			Medium = config.Font == Enum.Font.Gotham and Enum.Font.GothamMedium or (config.Font == Enum.Font.SourceSans and Enum.Font.SourceSans or Enum.Font.GothamMedium),
+			Regular = config.Font == Enum.Font.Gotham and Enum.Font.Gotham or (config.Font == Enum.Font.SourceSans and Enum.Font.SourceSans or Enum.Font.Gotham)
+		}
+		return fonts[fontType] or config.Font
+	end
 
 	local Window = {
 		Tabs = {},
@@ -515,7 +526,7 @@ function OpenCore:CreateWindow(config)
 		-- Title
 		local title = Instance.new("TextLabel")
 		title.BackgroundTransparency = 1
-		title.Font = Enum.Font.GothamBold
+		title.Font = GetFont("Bold")
 		title.Text = config.Title
 		title.TextColor3 = Theme.Text
 		title.TextSize = 16
@@ -527,7 +538,7 @@ function OpenCore:CreateWindow(config)
 		-- Subtitle
 		local subtitle = Instance.new("TextLabel")
 		subtitle.BackgroundTransparency = 1
-		subtitle.Font = Enum.Font.Gotham
+		subtitle.Font = GetFont("Regular")
 		subtitle.Text = config.Subtitle
 		subtitle.TextColor3 = Theme.SubText
 		subtitle.TextSize = 12
@@ -702,7 +713,7 @@ function OpenCore:CreateWindow(config)
 
 			local tabLabel = Instance.new("TextLabel")
 			tabLabel.BackgroundTransparency = 1
-			tabLabel.Font = Enum.Font.GothamMedium
+			tabLabel.Font = GetFont("Medium")
 			tabLabel.Text = tabConfig.Name
 			tabLabel.TextColor3 = Theme.SubText
 			tabLabel.TextSize = 13
@@ -826,7 +837,7 @@ function OpenCore:CreateWindow(config)
 
 				local sectionTitle = Instance.new("TextLabel")
 				sectionTitle.BackgroundTransparency = 1
-				sectionTitle.Font = Enum.Font.GothamBold
+				sectionTitle.Font = GetFont("Bold")
 				sectionTitle.Text = name
 				sectionTitle.TextColor3 = Theme.Text
 				sectionTitle.TextSize = 14
@@ -886,7 +897,7 @@ function OpenCore:CreateWindow(config)
 
 					local paragraphTitle = Instance.new("TextLabel")
 					paragraphTitle.BackgroundTransparency = 1
-					paragraphTitle.Font = Enum.Font.GothamBold
+					paragraphTitle.Font = GetFont("Bold")
 					paragraphTitle.Text = paragraphConfig.Title
 					paragraphTitle.TextColor3 = Theme.Text
 					paragraphTitle.TextSize = 13
@@ -896,7 +907,7 @@ function OpenCore:CreateWindow(config)
 
 					local paragraphText = Instance.new("TextLabel")
 					paragraphText.BackgroundTransparency = 1
-					paragraphText.Font = Enum.Font.Gotham
+					paragraphText.Font = GetFont("Regular")
 					paragraphText.Text = paragraphConfig.Content
 					paragraphText.TextColor3 = Theme.SubText
 					paragraphText.TextSize = 12
@@ -928,7 +939,7 @@ function OpenCore:CreateWindow(config)
 					btn.BackgroundColor3 = Theme.Surface
 					btn.BorderSizePixel = 0
 					btn.Size = UDim2.new(1, 0, 0, 35)
-					btn.Font = Enum.Font.GothamMedium
+					btn.Font = GetFont("Medium")
 					btn.Text = btnConfig.Name
 					btn.TextColor3 = Theme.Text
 					btn.TextSize = 13
@@ -977,7 +988,7 @@ function OpenCore:CreateWindow(config)
 
 					local label = Instance.new("TextLabel")
 					label.BackgroundTransparency = 1
-					label.Font = Enum.Font.GothamMedium
+					label.Font = GetFont("Medium")
 					label.Text = toggleConfig.Name
 					label.TextColor3 = Theme.Text
 					label.TextSize = 13
@@ -1059,7 +1070,7 @@ function OpenCore:CreateWindow(config)
 
 					local label = Instance.new("TextLabel")
 					label.BackgroundTransparency = 1
-					label.Font = Enum.Font.GothamMedium
+					label.Font = GetFont("Medium")
 					label.Text = sliderConfig.Name
 					label.TextColor3 = Theme.Text
 					label.TextSize = 13
@@ -1071,7 +1082,7 @@ function OpenCore:CreateWindow(config)
 
 					local valueBox = Instance.new("TextBox")
 					valueBox.BackgroundTransparency = 1
-					valueBox.Font = Enum.Font.GothamBold
+					valueBox.Font = GetFont("Bold")
 					valueBox.Text = tostring(value)
 					valueBox.TextColor3 = Theme.SubText
 					valueBox.TextSize = 13
@@ -1211,7 +1222,7 @@ function OpenCore:CreateWindow(config)
 
 					local label = Instance.new("TextLabel")
 					label.BackgroundTransparency = 1
-					label.Font = Enum.Font.GothamMedium
+					label.Font = GetFont("Medium")
 					label.Text = dropConfig.Name
 					label.TextColor3 = Theme.Text
 					label.TextSize = 13
@@ -1222,7 +1233,7 @@ function OpenCore:CreateWindow(config)
 
 					local valueLabel = Instance.new("TextLabel")
 					valueLabel.BackgroundTransparency = 1
-					valueLabel.Font = Enum.Font.Gotham
+					valueLabel.Font = GetFont("Regular")
 					valueLabel.Text = selected
 					valueLabel.TextColor3 = Theme.SubText
 					valueLabel.TextSize = 12
@@ -1257,7 +1268,7 @@ function OpenCore:CreateWindow(config)
 						option.BackgroundColor3 = Theme.Card
 						option.BorderSizePixel = 0
 						option.Size = UDim2.new(1, 0, 0, 30)
-						option.Font = Enum.Font.Gotham
+						option.Font = GetFont("Regular")
 						option.Text = "  " .. optionName
 						option.TextColor3 = Theme.SubText
 						option.TextSize = 12
@@ -1395,7 +1406,7 @@ function OpenCore:CreateWindow(config)
 
 					local label = Instance.new("TextLabel")
 					label.BackgroundTransparency = 1
-					label.Font = Enum.Font.GothamMedium
+					label.Font = GetFont("Medium")
 					label.Text = colorConfig.Name
 					label.TextColor3 = Theme.Text
 					label.TextSize = 13
@@ -1440,7 +1451,7 @@ function OpenCore:CreateWindow(config)
 					-- RGB/HSV Display
 					local rgbLabel = Instance.new("TextLabel")
 					rgbLabel.BackgroundTransparency = 1
-					rgbLabel.Font = Enum.Font.Gotham
+					rgbLabel.Font = GetFont("Regular")
 					rgbLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
 					rgbLabel.TextColor3 = Theme.SubText
 					rgbLabel.TextSize = 11
@@ -1451,7 +1462,7 @@ function OpenCore:CreateWindow(config)
 
 					local hsvLabel = Instance.new("TextLabel")
 					hsvLabel.BackgroundTransparency = 1
-					hsvLabel.Font = Enum.Font.Gotham
+					hsvLabel.Font = GetFont("Regular")
 					hsvLabel.Text = string.format("HSV: %d, %d, %d", h, s, v)
 					hsvLabel.TextColor3 = Theme.SubText
 					hsvLabel.TextSize = 11
@@ -1464,7 +1475,7 @@ function OpenCore:CreateWindow(config)
 					local function createHSVSlider(name, defaultVal, maxVal, yPos)
 						local sliderLabel = Instance.new("TextLabel")
 						sliderLabel.BackgroundTransparency = 1
-						sliderLabel.Font = Enum.Font.Gotham
+						sliderLabel.Font = GetFont("Regular")
 						sliderLabel.Text = name
 						sliderLabel.TextColor3 = Theme.SubText
 						sliderLabel.TextSize = 11
@@ -1475,7 +1486,7 @@ function OpenCore:CreateWindow(config)
 
 						local sliderValue = Instance.new("TextLabel")
 						sliderValue.BackgroundTransparency = 1
-						sliderValue.Font = Enum.Font.GothamBold
+						sliderValue.Font = GetFont("Bold")
 						sliderValue.Text = tostring(math.floor(defaultVal))
 						sliderValue.TextColor3 = Theme.Text
 						sliderValue.TextSize = 11
@@ -1706,7 +1717,7 @@ function OpenCore:CreateWindow(config)
 
 					local label = Instance.new("TextLabel")
 					label.BackgroundTransparency = 1
-					label.Font = Enum.Font.GothamMedium
+					label.Font = GetFont("Medium")
 					label.Text = inputConfig.Name
 					label.TextColor3 = Theme.Text
 					label.TextSize = 13
@@ -1720,7 +1731,7 @@ function OpenCore:CreateWindow(config)
 					textBox.BorderSizePixel = 0
 					textBox.Position = UDim2.new(0, 12, 0, 28)
 					textBox.Size = UDim2.new(1, -24, 0, 18)
-					textBox.Font = Enum.Font.Gotham
+					textBox.Font = GetFont("Regular")
 					textBox.PlaceholderText = inputConfig.Placeholder
 					textBox.PlaceholderColor3 = Theme.Muted
 					textBox.Text = inputConfig.Default
@@ -1829,7 +1840,7 @@ function OpenCore:CreateWindow(config)
 				
 					local label = Instance.new("TextLabel")
 					label.BackgroundTransparency = 1
-					label.Font = Enum.Font.GothamMedium
+					label.Font = GetFont("Medium")
 					label.Text = keyBindConfig.Name
 					label.TextColor3 = Theme.Text
 					label.TextSize = 13
@@ -1844,7 +1855,7 @@ function OpenCore:CreateWindow(config)
 					keyButton.BorderSizePixel = 0
 					keyButton.Position = UDim2.new(1, -12, 0.5, 0)
 					keyButton.Size = UDim2.new(0, 90, 0, 26)
-					keyButton.Font = Enum.Font.GothamBold
+					keyButton.Font = GetFont("Bold")
 					keyButton.Text = selectedKey.Name or "None"
 					keyButton.TextColor3 = Theme.Text
 					keyButton.TextSize = 12
