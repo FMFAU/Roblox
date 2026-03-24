@@ -1375,6 +1375,213 @@ function OpenCore:CreateWindow(config)
 					}
 				end
 
+				-- Multi-Select Dropdown
+				function Section:AddMultiDropdown(dropConfig)
+					dropConfig = dropConfig or {}
+					dropConfig.Name = dropConfig.Name or "Multi-Dropdown"
+					dropConfig.Options = dropConfig.Options or {}
+					dropConfig.Flag = dropConfig.Flag or nil
+					dropConfig.Callback = dropConfig.Callback or function() end
+
+					local selected = {}
+					local opened = false
+
+					local dropFrame = Instance.new("Frame")
+					dropFrame.BackgroundColor3 = Theme.Surface
+					dropFrame.BorderSizePixel = 0
+					dropFrame.Size = UDim2.new(1, 0, 0, 35)
+					dropFrame.ClipsDescendants = true
+					dropFrame.Parent = elements
+
+					AddCorner(dropFrame, 4)
+					AddStroke(dropFrame, Theme.Border, 1, 0)
+
+					local header = Instance.new("TextButton")
+					header.BackgroundTransparency = 1
+					header.Size = UDim2.new(1, 0, 0, 35)
+					header.Text = ""
+					header.Parent = dropFrame
+
+					local label = Instance.new("TextLabel")
+					label.BackgroundTransparency = 1
+					label.Font = GetFont(Window.Font, "Medium")
+					label.Text = dropConfig.Name
+					label.TextColor3 = Theme.Text
+					label.TextSize = 13
+					label.Position = UDim2.new(0, 12, 0, 0)
+					label.Size = UDim2.new(0.4, 0, 1, 0)
+					label.TextXAlignment = Enum.TextXAlignment.Left
+					label.Parent = header
+
+					local valueLabel = Instance.new("TextLabel")
+					valueLabel.BackgroundTransparency = 1
+					valueLabel.Font = GetFont(Window.Font, "Regular")
+					valueLabel.Text = "None selected"
+					valueLabel.TextColor3 = Theme.SubText
+					valueLabel.TextSize = 12
+					valueLabel.Position = UDim2.new(0.4, 0, 0, 0)
+					valueLabel.Size = UDim2.new(0.6, -35, 1, 0)
+					valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+					valueLabel.Parent = header
+
+					local arrow = Instance.new("ImageLabel")
+					arrow.BackgroundTransparency = 1
+					arrow.Image = Icons.ChevronDown
+					arrow.ImageColor3 = Theme.SubText
+					arrow.AnchorPoint = Vector2.new(1, 0.5)
+					arrow.Position = UDim2.new(1, -12, 0.5, 0)
+					arrow.Size = UDim2.new(0, 14, 0, 14)
+					arrow.Parent = header
+
+					local optionsContainer = Instance.new("Frame")
+					optionsContainer.BackgroundColor3 = Theme.Card
+					optionsContainer.BorderSizePixel = 0
+					optionsContainer.Position = UDim2.new(0, 1, 0, 36)
+					optionsContainer.Size = UDim2.new(1, -2, 0, 0)
+					optionsContainer.Parent = dropFrame
+
+					local optionsList = Instance.new("UIListLayout")
+					optionsList.SortOrder = Enum.SortOrder.LayoutOrder
+					optionsList.Padding = UDim.new(0, 0)
+					optionsList.Parent = optionsContainer
+
+					local function createOption(optionName)
+						local option = Instance.new("TextButton")
+						option.BackgroundColor3 = Theme.Card
+						option.BorderSizePixel = 0
+						option.Size = UDim2.new(1, 0, 0, 30)
+						option.Font = GetFont(Window.Font, "Regular")
+						option.Text = ""
+						option.Parent = optionsContainer
+
+						local checkbox = Instance.new("Frame")
+						checkbox.BackgroundColor3 = Theme.Surface
+						checkbox.BorderSizePixel = 0
+						checkbox.Position = UDim2.new(0, 8, 0.5, -8)
+						checkbox.Size = UDim2.new(0, 16, 0, 16)
+						checkbox.Parent = option
+						AddCorner(checkbox, 2)
+						AddStroke(checkbox, Theme.Border, 1, 0)
+
+						local checkmark = Instance.new("TextLabel")
+						checkmark.BackgroundTransparency = 1
+						checkmark.Font = Enum.Font.GothamBold
+						checkmark.Text = "✓"
+						checkmark.TextColor3 = Theme.Success
+						checkmark.TextSize = 14
+						checkmark.Size = UDim2.new(1, 0, 1, 0)
+						checkmark.Visible = false
+						checkmark.Parent = checkbox
+
+						local optionLabel = Instance.new("TextLabel")
+						optionLabel.BackgroundTransparency = 1
+						optionLabel.Font = GetFont(Window.Font, "Regular")
+						optionLabel.Text = optionName
+						optionLabel.TextColor3 = Theme.SubText
+						optionLabel.TextSize = 12
+						optionLabel.Position = UDim2.new(0, 30, 0, 0)
+						optionLabel.Size = UDim2.new(1, -40, 1, 0)
+						optionLabel.TextXAlignment = Enum.TextXAlignment.Left
+						optionLabel.Parent = option
+
+						local isSelected = false
+
+						option.MouseEnter:Connect(function()
+							Tween(option, {BackgroundColor3 = Theme.Hover}, 0.1)
+						end)
+
+						option.MouseLeave:Connect(function()
+							Tween(option, {BackgroundColor3 = Theme.Card}, 0.1)
+						end)
+
+						option.MouseButton1Click:Connect(function()
+							isSelected = not isSelected
+							checkmark.Visible = isSelected
+
+							if isSelected then
+								table.insert(selected, optionName)
+								Tween(checkbox, {BackgroundColor3 = Theme.Success}, 0.15)
+							else
+								for i, v in ipairs(selected) do
+									if v == optionName then
+										table.remove(selected, i)
+										break
+									end
+								end
+								Tween(checkbox, {BackgroundColor3 = Theme.Surface}, 0.15)
+							end
+
+							if #selected == 0 then
+								valueLabel.Text = "None selected"
+							else
+								valueLabel.Text = #selected .. " selected"
+							end
+
+							if dropConfig.Flag then
+								OpenCore.Flags[dropConfig.Flag] = selected
+							end
+
+							task.spawn(function()
+								pcall(dropConfig.Callback, selected)
+							end)
+						end)
+
+						return option
+					end
+
+					for _, option in ipairs(dropConfig.Options) do
+						createOption(option)
+					end
+
+					local function updateDropdownSize()
+						if opened then
+							local targetSize = UDim2.new(1, 0, 0, 36 + (#optionsContainer:GetChildren() - 1) * 30)
+							Tween(dropFrame, {Size = targetSize}, 0.2)
+						end
+					end
+
+					header.MouseButton1Click:Connect(function()
+						opened = not opened
+						local targetSize = opened and UDim2.new(1, 0, 0, 36 + (#optionsContainer:GetChildren() - 1) * 30) or UDim2.new(1, 0, 0, 35)
+
+						Tween(dropFrame, {Size = targetSize}, 0.2)
+						Tween(arrow, {Rotation = opened and 180 or 0}, 0.2)
+					end)
+
+					return {
+						Set = function(self, values)
+							selected = values
+							if #selected == 0 then
+								valueLabel.Text = "None selected"
+							else
+								valueLabel.Text = #selected .. " selected"
+							end
+							if dropConfig.Flag then
+								OpenCore.Flags[dropConfig.Flag] = selected
+							end
+						end,
+						Get = function(self)
+							return selected
+						end,
+						AddOption = function(self, optionName)
+							table.insert(dropConfig.Options, optionName)
+							createOption(optionName)
+							updateDropdownSize()
+						end,
+						Clear = function(self)
+							dropConfig.Options = {}
+							selected = {}
+							for _, child in pairs(optionsContainer:GetChildren()) do
+								if child:IsA("TextButton") then
+									child:Destroy()
+								end
+							end
+							valueLabel.Text = "None selected"
+							updateDropdownSize()
+						end
+					}
+				end
+
 				-- Colour Picker (Pending Ui ReLook)
 				function Section:AddColorPicker(colorConfig)
 					colorConfig = colorConfig or {}
@@ -2090,8 +2297,258 @@ function OpenCore:CreateWindow(config)
 	return Window
 end
 
--- Set Theme at Runtime (Really Buggy)
-function OpenCore:SetTheme(themeName)
+-- Improved Color Wheel Picker with Transparency & Brightness
+function OpenCore:AddColorWheel(sectionConfig)
+	sectionConfig = sectionConfig or {}
+	sectionConfig.Name = sectionConfig.Name or "Color Picker"
+	sectionConfig.Default = sectionConfig.Default or Color3.fromRGB(255, 0, 0)
+	sectionConfig.Flag = sectionConfig.Flag or nil
+	sectionConfig.Callback = sectionConfig.Callback or function() end
+
+	local colorFrame = Instance.new("Frame")
+	colorFrame.BackgroundColor3 = Theme.Surface
+	colorFrame.BorderSizePixel = 0
+	colorFrame.Size = UDim2.new(1, 0, 0, 35)
+	colorFrame.ClipsDescendants = true
+	colorFrame.Parent = elements
+
+	AddCorner(colorFrame, 4)
+	AddStroke(colorFrame, Theme.Border, 1, 0)
+
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Font = GetFont(Window.Font, "Medium")
+	label.Text = sectionConfig.Name
+	label.TextColor3 = Theme.Text
+	label.TextSize = 13
+	label.Position = UDim2.new(0, 12, 0, 0)
+	label.Size = UDim2.new(1, -60, 1, 0)
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = colorFrame
+
+	local colorPreview = Instance.new("Frame")
+	colorPreview.AnchorPoint = Vector2.new(1, 0.5)
+	colorPreview.BackgroundColor3 = sectionConfig.Default
+	colorPreview.BorderSizePixel = 0
+	colorPreview.Position = UDim2.new(1, -12, 0.5, 0)
+	colorPreview.Size = UDim2.new(0, 35, 0, 20)
+	colorPreview.Parent = colorFrame
+
+	AddCorner(colorPreview, 4)
+	AddStroke(colorPreview, Theme.Border, 1, 0)
+
+	local currentColor = sectionConfig.Default
+	local currentTransparency = 0
+	local hue, saturation, value = 0, 1, 1
+
+	local function createColorPickerTooltip()
+		local tooltip = Instance.new("Frame")
+		tooltip.BackgroundColor3 = Theme.Card
+		tooltip.BorderSizePixel = 0
+		tooltip.Size = UDim2.new(0, 250, 0, 300)
+		tooltip.Position = UDim2.new(0.5, -125, 0, 50)
+		tooltip.Parent = colorFrame
+		AddCorner(tooltip, 6)
+
+		-- Color wheel
+		local wheelCanvas = Instance.new("ImageLabel")
+		wheelCanvas.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		wheelCanvas.BorderSizePixel = 0
+		wheelCanvas.Position = UDim2.new(0, 15, 0, 15)
+		wheelCanvas.Size = UDim2.new(0, 220, 0, 220)
+		wheelCanvas.Image = "rbxasset://textures/ColorPicker/ColorWheel.png"
+		wheelCanvas.Parent = tooltip
+
+		-- Brightness slider
+		local brightnessLabel = Instance.new("TextLabel")
+		brightnessLabel.BackgroundTransparency = 1
+		brightnessLabel.Font = GetFont(Window.Font, "Regular")
+		brightnessLabel.Text = "Brightness"
+		brightnessLabel.TextColor3 = Theme.SubText
+		brightnessLabel.TextSize = 11
+		brightnessLabel.Position = UDim2.new(0, 15, 0, 240)
+		brightnessLabel.Size = UDim2.new(0.5, 0, 0, 15)
+		brightnessLabel.Parent = tooltip
+
+		local brightnessSlider = Instance.new("TextButton")
+		brightnessSlider.BackgroundColor3 = Theme.Surface
+		brightnessSlider.BorderSizePixel = 0
+		brightnessSlider.Position = UDim2.new(0, 15, 0, 258)
+		brightnessSlider.Size = UDim2.new(0.5, -20, 0, 12)
+		brightnessSlider.AutoButtonColor = false
+		brightnessSlider.Font = Enum.Font.SourceSans
+		brightnessSlider.Text = ""
+		brightnessSlider.Parent = tooltip
+		AddCorner(brightnessSlider, 3)
+
+		local brightnessGradient = Instance.new("UIGradient")
+		brightnessGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+		}
+		brightnessGradient.Parent = brightnessSlider
+
+		local brightnessFill = Instance.new("Frame")
+		brightnessFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		brightnessFill.BorderSizePixel = 0
+		brightnessFill.Size = UDim2.new(1, 0, 1, 0)
+		brightnessFill.Parent = brightnessSlider
+		AddCorner(brightnessFill, 3)
+
+		-- Transparency slider
+		local transparencyLabel = Instance.new("TextLabel")
+		transparencyLabel.BackgroundTransparency = 1
+		transparencyLabel.Font = GetFont(Window.Font, "Regular")
+		transparencyLabel.Text = "Transparency"
+		transparencyLabel.TextColor3 = Theme.SubText
+		transparencyLabel.TextSize = 11
+		transparencyLabel.Position = UDim2.new(0.5, 5, 0, 240)
+		transparencyLabel.Size = UDim2.new(0.5, -20, 0, 15)
+		transparencyLabel.Parent = tooltip
+
+		local transparencySlider = Instance.new("TextButton")
+		transparencySlider.BackgroundColor3 = Theme.Surface
+		transparencySlider.BorderSizePixel = 0
+		transparencySlider.Position = UDim2.new(0.5, 5, 0, 258)
+		transparencySlider.Size = UDim2.new(0.5, -20, 0, 12)
+		transparencySlider.AutoButtonColor = false
+		transparencySlider.Font = Enum.Font.SourceSans
+		transparencySlider.Text = ""
+		transparencySlider.Parent = tooltip
+		AddCorner(transparencySlider, 3)
+
+		local transparencyGradient = Instance.new("UIGradient")
+		transparencyGradient.Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
+		}
+		transparencyGradient.Parent = transparencySlider
+
+		local transparencyFill = Instance.new("Frame")
+		transparencyFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		transparencyFill.BorderSizePixel = 0
+		transparencyFill.Size = UDim2.new(1, 0, 1, 0)
+		transparencyFill.Parent = transparencySlider
+		AddCorner(transparencyFill, 3)
+
+		-- Preview
+		local previewBox = Instance.new("Frame")
+		previewBox.BackgroundColor3 = currentColor
+		previewBox.BorderSizePixel = 0
+		previewBox.Position = UDim2.new(0, 15, 0, 280)
+		previewBox.Size = UDim2.new(1, -30, 0, 15)
+		previewBox.Parent = tooltip
+		AddCorner(previewBox, 4)
+
+		local function updateColor()
+			currentColor = Color3.fromHSV(hue, saturation, value)
+			colorPreview.BackgroundColor3 = currentColor
+			previewBox.BackgroundColor3 = currentColor
+			if sectionConfig.Flag then
+				OpenCore.Flags[sectionConfig.Flag] = {Color = currentColor, Transparency = currentTransparency}
+			end
+			task.spawn(function()
+				pcall(sectionConfig.Callback, {Color = currentColor, Transparency = currentTransparency})
+			end)
+		end
+
+		local function onWheelClick(input)
+			local relativePos = input.Position - wheelCanvas.AbsolutePosition
+			local center = wheelCanvas.AbsoluteSize / 2
+			local delta = relativePos - center
+			local radius = delta.Magnitude
+			local maxRadius = wheelCanvas.AbsoluteSize.X / 2
+
+			if radius <= maxRadius then
+				saturation = math.min(1, radius / maxRadius)
+				hue = (math.atan2(delta.Y, delta.X) + math.pi) / (2 * math.pi)
+				updateColor()
+			end
+		end
+
+		local function onBrightnessSliderClick(input)
+			local relativeX = input.Position.X - brightnessSlider.AbsolutePosition.X
+			value = math.clamp(relativeX / brightnessSlider.AbsoluteSize.X, 0, 1)
+			brightnessFill.Size = UDim2.new(value, 0, 1, 0)
+			updateColor()
+		end
+
+		local function onTransparencySliderClick(input)
+			local relativeX = input.Position.X - transparencySlider.AbsolutePosition.X
+			currentTransparency = math.clamp(relativeX / transparencySlider.AbsoluteSize.X, 0, 1)
+			transparencyFill.Size = UDim2.new(currentTransparency, 0, 1, 0)
+			updateColor()
+		end
+
+		wheelCanvas.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				onWheelClick(input)
+				local conn = UserInputService.InputChanged:Connect(function(moveInput)
+					if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
+						onWheelClick(moveInput)
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(endInput)
+					if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+						conn:Disconnect()
+					end
+				end)
+			end
+		end)
+
+		brightnessSlider.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				onBrightnessSliderClick(input)
+				local conn = UserInputService.InputChanged:Connect(function(moveInput)
+					if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
+						onBrightnessSliderClick(moveInput)
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(endInput)
+					if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+						conn:Disconnect()
+					end
+				end)
+			end
+		end)
+
+		transparencySlider.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				onTransparencySliderClick(input)
+				local conn = UserInputService.InputChanged:Connect(function(moveInput)
+					if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
+						onTransparencySliderClick(moveInput)
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(endInput)
+					if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+						conn:Disconnect()
+					end
+				end)
+			end
+		end)
+
+		return tooltip
+	end
+
+	colorPreview.MouseButton1Click:Connect(function()
+		if colorFrame:FindFirstChild("ColorPickerTooltip") then
+			colorFrame:FindFirstChild("ColorPickerTooltip"):Destroy()
+		else
+			createColorPickerTooltip()
+		end
+	end)
+
+	return {
+		Set = function(self, color)
+			currentColor = color
+			colorPreview.BackgroundColor3 = currentColor
+			if sectionConfig.Flag then
+				OpenCore.Flags[sectionConfig.Flag] = {Color = currentColor, Transparency = currentTransparency}
+			end
+		end
+	}
+end
 	if not self.Themes[themeName] then
 		warn("Theme '" .. themeName .. "' does not exist!")
 		return false
