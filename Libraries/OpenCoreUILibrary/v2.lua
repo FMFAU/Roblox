@@ -1375,328 +1375,252 @@ function OpenCore:CreateWindow(config)
 					}
 				end
 
-				-- Colour Picker (Pending Ui ReLook)
-				function Section:AddColorPicker(colorConfig)
-					colorConfig = colorConfig or {}
-					colorConfig.Name = colorConfig.Name or "Color Picker"
-					colorConfig.Default = colorConfig.Default or Color3.fromRGB(255, 255, 255)
-					colorConfig.Flag = colorConfig.Flag or nil
-					colorConfig.Callback = colorConfig.Callback or function() end
+                -- Color Wheel
+                function OpenCore:AddColorWheel(sectionConfig)
+                    sectionConfig = sectionConfig or {}
+                    sectionConfig.Name = sectionConfig.Name or "Color Picker"
+                    sectionConfig.Default = sectionConfig.Default or Color3.fromRGB(255, 0, 0)
+                    sectionConfig.Flag = sectionConfig.Flag or nil
+                    sectionConfig.Callback = sectionConfig.Callback or function() end
 
-					local selectedColor = colorConfig.Default
-					local h, s, v = RGBtoHSV(math.floor(selectedColor.R * 255), math.floor(selectedColor.G * 255), math.floor(selectedColor.B * 255))
-					local r, g, b = math.floor(selectedColor.R * 255), math.floor(selectedColor.G * 255), math.floor(selectedColor.B * 255)
-					local expanded = false
+                    local colorFrame = Instance.new("Frame")
+                    colorFrame.BackgroundColor3 = Theme.Surface
+                    colorFrame.BorderSizePixel = 0
+                    colorFrame.Size = UDim2.new(1, 0, 0, 35)
+                    colorFrame.ClipsDescendants = false
+                    colorFrame.Parent = elements
+                    AddCorner(colorFrame, 4)
+                    AddStroke(colorFrame, Theme.Border, 1, 0)
 
-					local colorFrame = Instance.new("Frame")
-					colorFrame.BackgroundColor3 = Theme.Surface
-					colorFrame.BorderSizePixel = 0
-					colorFrame.Size = UDim2.new(1, 0, 0, 35)
-					colorFrame.ClipsDescendants = true
-					colorFrame.Parent = elements
+                    local label = Instance.new("TextLabel")
+                    label.BackgroundTransparency = 1
+                    label.Font = GetFont(Window.Font, "Medium")
+                    label.Text = sectionConfig.Name
+                    label.TextColor3 = Theme.Text
+                    label.TextSize = 13
+                    label.Position = UDim2.new(0, 12, 0, 0)
+                    label.Size = UDim2.new(1, -60, 1, 0)
+                    label.TextXAlignment = Enum.TextXAlignment.Left
+                    label.Parent = colorFrame
 
-					AddCorner(colorFrame, 4)
-					AddStroke(colorFrame, Theme.Border, 1, 0)
+                    local colorPreview = Instance.new("Frame")
+                    colorPreview.AnchorPoint = Vector2.new(1, 0.5)
+                    colorPreview.BackgroundColor3 = sectionConfig.Default
+                    colorPreview.BorderSizePixel = 0
+                    colorPreview.Position = UDim2.new(1, -12, 0.5, 0)
+                    colorPreview.Size = UDim2.new(0, 35, 0, 20)
+                    colorPreview.Parent = colorFrame
+                    AddCorner(colorPreview, 4)
+                    AddStroke(colorPreview, Theme.Border, 1, 0)
 
-					-- Header
-					local header = Instance.new("TextButton")
-					header.BackgroundTransparency = 1
-					header.Size = UDim2.new(1, 0, 0, 35)
-					header.Text = ""
-					header.Parent = colorFrame
+                    local currentColor = sectionConfig.Default
+                    local currentTransparency = 0
+                    local hue, saturation, value = 0, 1, 1
 
-					local label = Instance.new("TextLabel")
-					label.BackgroundTransparency = 1
-					label.Font = GetFont(Window.Font, "Medium")
-					label.Text = colorConfig.Name
-					label.TextColor3 = Theme.Text
-					label.TextSize = 13
-					label.Position = UDim2.new(0, 12, 0, 0)
-					label.Size = UDim2.new(1, -60, 1, 0)
-					label.TextXAlignment = Enum.TextXAlignment.Left
-					label.Parent = header
+                    local function createColorPickerTooltip()
+                        local tooltip = Instance.new("Frame")
+                        tooltip.BackgroundColor3 = Theme.Card
+                        tooltip.BorderSizePixel = 0
+                        tooltip.Size = UDim2.new(0, 250, 0, 300)
+                        tooltip.Parent = colorFrame.Parent.Parent
+                        AddCorner(tooltip, 6)
 
-					local colorPreview = Instance.new("Frame")
-					colorPreview.AnchorPoint = Vector2.new(1, 0.5)
-					colorPreview.BackgroundColor3 = selectedColor
-					colorPreview.BorderSizePixel = 0
-					colorPreview.Position = UDim2.new(1, -12, 0.5, 0)
-					colorPreview.Size = UDim2.new(0, 35, 0, 20)
-					colorPreview.Parent = header
+                        local wheelCanvas = Instance.new("Frame")
+                        wheelCanvas.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        wheelCanvas.BorderSizePixel = 0
+                        wheelCanvas.Position = UDim2.new(0, 15, 0, 15)
+                        wheelCanvas.Size = UDim2.new(0, 220, 0, 220)
+                        wheelCanvas.Parent = tooltip
+                        AddCorner(wheelCanvas, 110)
 
-					AddCorner(colorPreview, 4)
-					AddStroke(colorPreview, Theme.Border, 1, 0)
+                        local brightnessLabel = Instance.new("TextLabel")
+                        brightnessLabel.BackgroundTransparency = 1
+                        brightnessLabel.Font = GetFont(Window.Font, "Regular")
+                        brightnessLabel.Text = "Brightness"
+                        brightnessLabel.TextColor3 = Theme.SubText
+                        brightnessLabel.TextSize = 11
+                        brightnessLabel.Position = UDim2.new(0, 15, 0, 240)
+                        brightnessLabel.Size = UDim2.new(0.5, 0, 0, 15)
+                        brightnessLabel.Parent = tooltip
 
-					local panel = Instance.new("Frame")
-					panel.BackgroundTransparency = 1
-					panel.Position = UDim2.new(0, 0, 0, 40)
-					panel.Size = UDim2.new(1, 0, 0, 200)
-					panel.Parent = colorFrame
+                        local brightnessSlider = Instance.new("TextButton")
+                        brightnessSlider.BackgroundColor3 = Theme.Surface
+                        brightnessSlider.BorderSizePixel = 0
+                        brightnessSlider.Position = UDim2.new(0, 15, 0, 258)
+                        brightnessSlider.Size = UDim2.new(0.5, -20, 0, 12)
+                        brightnessSlider.AutoButtonColor = false
+                        brightnessSlider.Font = Enum.Font.SourceSans
+                        brightnessSlider.Text = ""
+                        brightnessSlider.Parent = tooltip
+                        AddCorner(brightnessSlider, 3)
 
-					local panelPadding = Instance.new("UIPadding")
-					panelPadding.PaddingLeft = UDim.new(0, 12)
-					panelPadding.PaddingRight = UDim.new(0, 12)
-					panelPadding.PaddingBottom = UDim.new(0, 12)
-					panelPadding.Parent = panel
+                        local brightnessGradient = Instance.new("UIGradient")
+                        brightnessGradient.Color = ColorSequence.new{
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+                            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+                        }
+                        brightnessGradient.Parent = brightnessSlider
 
-					-- Large Color Preview
-					local largePreview = Instance.new("Frame")
-					largePreview.BackgroundColor3 = selectedColor
-					largePreview.BorderSizePixel = 0
-					largePreview.Size = UDim2.new(1, 0, 0, 60)
-					largePreview.Parent = panel
+                        local brightnessFill = Instance.new("Frame")
+                        brightnessFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        brightnessFill.BorderSizePixel = 0
+                        brightnessFill.Size = UDim2.new(1, 0, 1, 0)
+                        brightnessFill.Parent = brightnessSlider
+                        AddCorner(brightnessFill, 3)
 
-					AddCorner(largePreview, 6)
-					AddStroke(largePreview, Theme.Border, 1, 0)
+                        local transparencyLabel = Instance.new("TextLabel")
+                        transparencyLabel.BackgroundTransparency = 1
+                        transparencyLabel.Font = GetFont(Window.Font, "Regular")
+                        transparencyLabel.Text = "Transparency"
+                        transparencyLabel.TextColor3 = Theme.SubText
+                        transparencyLabel.TextSize = 11
+                        transparencyLabel.Position = UDim2.new(0.5, 5, 0, 240)
+                        transparencyLabel.Size = UDim2.new(0.5, -20, 0, 15)
+                        transparencyLabel.Parent = tooltip
 
-					-- RGB/HSV Display
-					local rgbLabel = Instance.new("TextLabel")
-					rgbLabel.BackgroundTransparency = 1
-					rgbLabel.Font = GetFont(Window.Font, "Regular")
-					rgbLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
-					rgbLabel.TextColor3 = Theme.SubText
-					rgbLabel.TextSize = 11
-					rgbLabel.Position = UDim2.new(0, 0, 0, 66)
-					rgbLabel.Size = UDim2.new(0.5, 0, 0, 15)
-					rgbLabel.TextXAlignment = Enum.TextXAlignment.Left
-					rgbLabel.Parent = panel
+                        local transparencySlider = Instance.new("TextButton")
+                        transparencySlider.BackgroundColor3 = Theme.Surface
+                        transparencySlider.BorderSizePixel = 0
+                        transparencySlider.Position = UDim2.new(0.5, 5, 0, 258)
+                        transparencySlider.Size = UDim2.new(0.5, -20, 0, 12)
+                        transparencySlider.AutoButtonColor = false
+                        transparencySlider.Font = Enum.Font.SourceSans
+                        transparencySlider.Text = ""
+                        transparencySlider.Parent = tooltip
+                        AddCorner(transparencySlider, 3)
 
-					local hsvLabel = Instance.new("TextLabel")
-					hsvLabel.BackgroundTransparency = 1
-					hsvLabel.Font = GetFont(Window.Font, "Regular")
-					hsvLabel.Text = string.format("HSV: %d, %d, %d", h, s, v)
-					hsvLabel.TextColor3 = Theme.SubText
-					hsvLabel.TextSize = 11
-					hsvLabel.Position = UDim2.new(0.5, 0, 0, 66)
-					hsvLabel.Size = UDim2.new(0.5, 0, 0, 15)
-					hsvLabel.TextXAlignment = Enum.TextXAlignment.Right
-					hsvLabel.Parent = panel
+                        local transparencyGradient = Instance.new("UIGradient")
+                        transparencyGradient.Color = ColorSequence.new{
+                            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+                            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
+                        }
+                        transparencyGradient.Parent = transparencySlider
 
-					-- HSV Sliders
-					local function createHSVSlider(name, defaultVal, maxVal, yPos)
-						local sliderLabel = Instance.new("TextLabel")
-						sliderLabel.BackgroundTransparency = 1
-						sliderLabel.Font = GetFont(Window.Font, "Regular")
-						sliderLabel.Text = name
-						sliderLabel.TextColor3 = Theme.SubText
-						sliderLabel.TextSize = 11
-						sliderLabel.Position = UDim2.new(0, 0, 0, yPos)
-						sliderLabel.Size = UDim2.new(0, 20, 0, 18)
-						sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
-						sliderLabel.Parent = panel
+                        local transparencyFill = Instance.new("Frame")
+                        transparencyFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        transparencyFill.BorderSizePixel = 0
+                        transparencyFill.Size = UDim2.new(1, 0, 1, 0)
+                        transparencyFill.Parent = transparencySlider
+                        AddCorner(transparencyFill, 3)
 
-						local sliderValue = Instance.new("TextLabel")
-						sliderValue.BackgroundTransparency = 1
-						sliderValue.Font = GetFont(Window.Font, "Bold")
-						sliderValue.Text = tostring(math.floor(defaultVal))
-						sliderValue.TextColor3 = Theme.Text
-						sliderValue.TextSize = 11
-						sliderValue.Position = UDim2.new(1, -35, 0, yPos)
-						sliderValue.Size = UDim2.new(0, 35, 0, 18)
-						sliderValue.TextXAlignment = Enum.TextXAlignment.Right
-						sliderValue.Parent = panel
+                        local previewBox = Instance.new("Frame")
+                        previewBox.BackgroundColor3 = currentColor
+                        previewBox.BorderSizePixel = 0
+                        previewBox.Position = UDim2.new(0, 15, 0, 280)
+                        previewBox.Size = UDim2.new(1, -30, 0, 15)
+                        previewBox.Parent = tooltip
+                        AddCorner(previewBox, 4)
 
-						local sliderBar = Instance.new("TextButton")
-						sliderBar.BorderSizePixel = 0
-						sliderBar.Position = UDim2.new(0, 28, 0, yPos + 4)
-						sliderBar.Size = UDim2.new(1, -70, 0, 10)
-						sliderBar.Text = ""
-						sliderBar.Parent = panel
+                        local function updateColor()
+                            currentColor = Color3.fromHSV(hue, saturation, value)
+                            colorPreview.BackgroundColor3 = currentColor
+                            previewBox.BackgroundColor3 = currentColor
+                            if sectionConfig.Flag then
+                                OpenCore.Flags[sectionConfig.Flag] = {Color = currentColor, Transparency = currentTransparency}
+                            end
+                            task.spawn(function()
+                                pcall(sectionConfig.Callback, {Color = currentColor, Transparency = currentTransparency})
+                            end)
+                        end
 
-						AddCorner(sliderBar, 5)
+                        local function onWheelClick(input)
+                            local relativePos = input.Position - wheelCanvas.AbsolutePosition
+                            local center = wheelCanvas.AbsoluteSize / 2
+                            local delta = relativePos - center
+                            local radius = delta.Magnitude
+                            local maxRadius = wheelCanvas.AbsoluteSize.X / 2
+                            if radius <= maxRadius then
+                                saturation = math.min(1, radius / maxRadius)
+                                hue = (math.atan2(delta.Y, delta.X) + math.pi) / (2 * math.pi)
+                                updateColor()
+                            end
+                        end
 
-						-- Gradient for Hue slider - use bright background
-						if name == "H" then
-							sliderBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-							local gradient = Instance.new("UIGradient")
-							gradient.Color = ColorSequence.new{
-								ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
-								ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
-								ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
-								ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
-								ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
-								ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
-								ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
-							}
-							gradient.Parent = sliderBar
-						else
-							sliderBar.BackgroundColor3 = Theme.Card
-							local sliderFill = Instance.new("Frame")
-							sliderFill.BackgroundColor3 = Theme.SliderFill
-							sliderFill.BorderSizePixel = 0
-							sliderFill.Size = UDim2.new(defaultVal / maxVal, 0, 1, 0)
-							sliderFill.Parent = sliderBar
+                        local function onBrightnessSliderClick(input)
+                            local relativeX = input.Position.X - brightnessSlider.AbsolutePosition.X
+                            value = math.clamp(relativeX / brightnessSlider.AbsoluteSize.X, 0, 1)
+                            brightnessFill.Size = UDim2.new(value, 0, 1, 0)
+                            updateColor()
+                        end
 
-							AddCorner(sliderFill, 5)
-							return sliderBar, sliderFill, sliderValue
-						end
+                        local function onTransparencySliderClick(input)
+                            local relativeX = input.Position.X - transparencySlider.AbsolutePosition.X
+                            currentTransparency = math.clamp(relativeX / transparencySlider.AbsoluteSize.X, 0, 1)
+                            transparencyFill.Size = UDim2.new(currentTransparency, 0, 1, 0)
+                            updateColor()
+                        end
 
-						return sliderBar, nil, sliderValue
-					end
+                        wheelCanvas.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                onWheelClick(input)
+                                local conn = UserInputService.InputChanged:Connect(function(moveInput)
+                                    if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
+                                        onWheelClick(moveInput)
+                                    end
+                                end)
+                                UserInputService.InputEnded:Connect(function(endInput)
+                                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        conn:Disconnect()
+                                    end
+                                end)
+                            end
+                        end)
 
-					local hBar, _, hValue = createHSVSlider("H", h, 360, 86)
-					local sBar, sFill, sValue = createHSVSlider("S", s, 100, 106)
-					local vBar, vFill, vValue = createHSVSlider("V", v, 100, 126)
+                        brightnessSlider.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                onBrightnessSliderClick(input)
+                                local conn = UserInputService.InputChanged:Connect(function(moveInput)
+                                    if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
+                                        onBrightnessSliderClick(moveInput)
+                                    end
+                                end)
+                                UserInputService.InputEnded:Connect(function(endInput)
+                                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        conn:Disconnect()
+                                    end
+                                end)
+                            end
+                        end)
 
-					-- Color Palette
-					local paletteFrame = Instance.new("Frame")
-					paletteFrame.BackgroundTransparency = 1
-					paletteFrame.Position = UDim2.new(0, 0, 0, 146)
-					paletteFrame.Size = UDim2.new(1, 0, 0, 40)
-					paletteFrame.Parent = panel
+                        transparencySlider.InputBegan:Connect(function(input)
+                            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                onTransparencySliderClick(input)
+                                local conn = UserInputService.InputChanged:Connect(function(moveInput)
+                                    if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
+                                        onTransparencySliderClick(moveInput)
+                                    end
+                                end)
+                                UserInputService.InputEnded:Connect(function(endInput)
+                                    if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        conn:Disconnect()
+                                    end
+                                end)
+                            end
+                        end)
 
-					local paletteLayout = Instance.new("UIListLayout")
-					paletteLayout.FillDirection = Enum.FillDirection.Horizontal
-					paletteLayout.Padding = UDim.new(0, 6)
-					paletteLayout.Parent = paletteFrame
+                        return tooltip
+                    end
 
-					local presetColors = {
-						Color3.fromRGB(244, 67, 54),   -- Red
-						Color3.fromRGB(255, 152, 0),   -- Orange
-						Color3.fromRGB(255, 193, 7),   -- Yellow
-						Color3.fromRGB(0, 188, 212),   -- Cyan
-						Color3.fromRGB(76, 175, 80),   -- Green
-						Color3.fromRGB(156, 39, 176),  -- Purple
-						Color3.fromRGB(255, 255, 255), -- White
-						Color3.fromRGB(0, 0, 0)        -- Black
-					}
+                    colorPreview.MouseButton1Click:Connect(function()
+                        if colorFrame.Parent:FindFirstChild("ColorPickerTooltip") then
+                            colorFrame.Parent:FindFirstChild("ColorPickerTooltip"):Destroy()
+                        else
+                            local tooltip = createColorPickerTooltip()
+                            tooltip.Name = "ColorPickerTooltip"
+                        end
+                    end)
 
-					for _, color in ipairs(presetColors) do
-						local swatch = Instance.new("TextButton")
-						swatch.BackgroundColor3 = color
-						swatch.BorderSizePixel = 0
-						swatch.Size = UDim2.new(0, 35, 0, 35)
-						swatch.Text = ""
-						swatch.Parent = paletteFrame
+                    return {
+                        Set = function(self, color)
+                            currentColor = color
+                            colorPreview.BackgroundColor3 = currentColor
+                            if sectionConfig.Flag then
+                                OpenCore.Flags[sectionConfig.Flag] = {Color = currentColor, Transparency = currentTransparency}
+                            end
+                        end
+                    }
+                end
 
-						AddCorner(swatch, 6)
-						AddStroke(swatch, Theme.Border, 1, 0)
-
-						swatch.MouseButton1Click:Connect(function()
-							selectedColor = color
-							r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
-							h, s, v = RGBtoHSV(r, g, b)
-
-							colorPreview.BackgroundColor3 = selectedColor
-							largePreview.BackgroundColor3 = selectedColor
-							hValue.Text = tostring(math.floor(h))
-							sValue.Text = tostring(math.floor(s))
-							vValue.Text = tostring(math.floor(v))
-							if sFill then sFill.Size = UDim2.new(s / 100, 0, 1, 0) end
-							if vFill then vFill.Size = UDim2.new(v / 100, 0, 1, 0) end
-
-							rgbLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
-							hsvLabel.Text = string.format("HSV: %d, %d, %d", h, s, v)
-
-							if colorConfig.Flag then
-								OpenCore.Flags[colorConfig.Flag] = selectedColor
-							end
-							task.spawn(function()
-								pcall(colorConfig.Callback, {
-									Color = selectedColor,
-									RGB = {R = r, G = g, B = b},
-									HSV = {H = h, S = s, V = v},
-									HEX = ColorToHex(selectedColor)
-								})
-							end)
-						end)
-					end
-
-					local function updateColor()
-						r, g, b = HSVtoRGB(h, s, v)
-						selectedColor = Color3.fromRGB(r, g, b)
-						colorPreview.BackgroundColor3 = selectedColor
-						largePreview.BackgroundColor3 = selectedColor
-
-						rgbLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
-						hsvLabel.Text = string.format("HSV: %d, %d, %d", h, s, v)
-
-						if colorConfig.Flag then
-							OpenCore.Flags[colorConfig.Flag] = selectedColor
-						end
-						task.spawn(function()
-							pcall(colorConfig.Callback, {
-								Color = selectedColor,
-								RGB = {R = r, G = g, B = b},
-								HSV = {H = h, S = s, V = v},
-								HEX = ColorToHex(selectedColor)
-							})
-						end)
-					end
-
-					local function createSliderLogic(bar, fill, valueLabel, channel, maxVal)
-						local dragging = false
-
-						local function update(input)
-							local pos = math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-							local val = pos * maxVal
-
-							if channel == "h" then h = val
-							elseif channel == "s" then s = val
-							elseif channel == "v" then v = val end
-
-							valueLabel.Text = tostring(math.floor(val))
-							if fill then
-								Tween(fill, {Size = UDim2.new(pos, 0, 1, 0)}, 0.05)
-							end
-							updateColor()
-						end
-
-						bar.InputBegan:Connect(function(input)
-							if input.UserInputType == Enum.UserInputType.MouseButton1 then
-								dragging = true
-								update(input)
-							end
-						end)
-
-						bar.InputEnded:Connect(function(input)
-							if input.UserInputType == Enum.UserInputType.MouseButton1 then
-								dragging = false
-							end
-						end)
-
-						UserInputService.InputChanged:Connect(function(input)
-							if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-								update(input)
-							end
-						end)
-					end
-
-					createSliderLogic(hBar, nil, hValue, "h", 360)
-					createSliderLogic(sBar, sFill, sValue, "s", 100)
-					createSliderLogic(vBar, vFill, vValue, "v", 100)
-
-					-- Toggle expansion
-					header.MouseButton1Click:Connect(function()
-						expanded = not expanded
-						local targetSize = expanded and UDim2.new(1, 0, 0, 250) or UDim2.new(1, 0, 0, 35)
-						Tween(colorFrame, {Size = targetSize}, 0.3)
-						colorPreview.Visible = not expanded
-					end)
-
-					return {
-						Set = function(self, color)
-							selectedColor = color
-							r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
-							h, s, v = RGBtoHSV(r, g, b)
-
-							colorPreview.BackgroundColor3 = selectedColor
-							largePreview.BackgroundColor3 = selectedColor
-							hValue.Text = tostring(math.floor(h))
-							sValue.Text = tostring(math.floor(s))
-							vValue.Text = tostring(math.floor(v))
-							if sFill then sFill.Size = UDim2.new(s / 100, 0, 1, 0) end
-							if vFill then vFill.Size = UDim2.new(v / 100, 0, 1, 0) end
-
-							rgbLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
-							hsvLabel.Text = string.format("HSV: %d, %d, %d", h, s, v)
-
-							if colorConfig.Flag then
-								OpenCore.Flags[colorConfig.Flag] = selectedColor
-							end
-						end
-					}
-				end
 
 				-- Input
 				function Section:AddInput(inputConfig)
@@ -2224,252 +2148,6 @@ function OpenCore:CreateTheme(themeName, themeData)
 	self.Themes[themeName] = themeData
 	print("Theme '" .. themeName .. "' created successfully!")
 	return true
-end
-
--- Improved Color Wheel Picker with Transparency & Brightness
-function OpenCore:AddColorWheel(sectionConfig)
-	sectionConfig = sectionConfig or {}
-	sectionConfig.Name = sectionConfig.Name or "Color Picker"
-	sectionConfig.Default = sectionConfig.Default or Color3.fromRGB(255, 0, 0)
-	sectionConfig.Flag = sectionConfig.Flag or nil
-	sectionConfig.Callback = sectionConfig.Callback or function() end
-
-	local colorFrame = Instance.new("Frame")
-	colorFrame.BackgroundColor3 = Theme.Surface
-	colorFrame.BorderSizePixel = 0
-	colorFrame.Size = UDim2.new(1, 0, 0, 35)
-	colorFrame.ClipsDescendants = false
-	colorFrame.Parent = elements
-	AddCorner(colorFrame, 4)
-	AddStroke(colorFrame, Theme.Border, 1, 0)
-
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.Font = GetFont(Window.Font, "Medium")
-	label.Text = sectionConfig.Name
-	label.TextColor3 = Theme.Text
-	label.TextSize = 13
-	label.Position = UDim2.new(0, 12, 0, 0)
-	label.Size = UDim2.new(1, -60, 1, 0)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Parent = colorFrame
-
-	local colorPreview = Instance.new("Frame")
-	colorPreview.AnchorPoint = Vector2.new(1, 0.5)
-	colorPreview.BackgroundColor3 = sectionConfig.Default
-	colorPreview.BorderSizePixel = 0
-	colorPreview.Position = UDim2.new(1, -12, 0.5, 0)
-	colorPreview.Size = UDim2.new(0, 35, 0, 20)
-	colorPreview.Parent = colorFrame
-	AddCorner(colorPreview, 4)
-	AddStroke(colorPreview, Theme.Border, 1, 0)
-
-	local currentColor = sectionConfig.Default
-	local currentTransparency = 0
-	local hue, saturation, value = 0, 1, 1
-
-	local function createColorPickerTooltip()
-		local tooltip = Instance.new("Frame")
-		tooltip.BackgroundColor3 = Theme.Card
-		tooltip.BorderSizePixel = 0
-		tooltip.Size = UDim2.new(0, 250, 0, 300)
-		tooltip.Parent = colorFrame.Parent.Parent
-		AddCorner(tooltip, 6)
-
-		local wheelCanvas = Instance.new("Frame")
-		wheelCanvas.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		wheelCanvas.BorderSizePixel = 0
-		wheelCanvas.Position = UDim2.new(0, 15, 0, 15)
-		wheelCanvas.Size = UDim2.new(0, 220, 0, 220)
-		wheelCanvas.Parent = tooltip
-		AddCorner(wheelCanvas, 110)
-
-		local brightnessLabel = Instance.new("TextLabel")
-		brightnessLabel.BackgroundTransparency = 1
-		brightnessLabel.Font = GetFont(Window.Font, "Regular")
-		brightnessLabel.Text = "Brightness"
-		brightnessLabel.TextColor3 = Theme.SubText
-		brightnessLabel.TextSize = 11
-		brightnessLabel.Position = UDim2.new(0, 15, 0, 240)
-		brightnessLabel.Size = UDim2.new(0.5, 0, 0, 15)
-		brightnessLabel.Parent = tooltip
-
-		local brightnessSlider = Instance.new("TextButton")
-		brightnessSlider.BackgroundColor3 = Theme.Surface
-		brightnessSlider.BorderSizePixel = 0
-		brightnessSlider.Position = UDim2.new(0, 15, 0, 258)
-		brightnessSlider.Size = UDim2.new(0.5, -20, 0, 12)
-		brightnessSlider.AutoButtonColor = false
-		brightnessSlider.Font = Enum.Font.SourceSans
-		brightnessSlider.Text = ""
-		brightnessSlider.Parent = tooltip
-		AddCorner(brightnessSlider, 3)
-
-		local brightnessGradient = Instance.new("UIGradient")
-		brightnessGradient.Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
-		}
-		brightnessGradient.Parent = brightnessSlider
-
-		local brightnessFill = Instance.new("Frame")
-		brightnessFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		brightnessFill.BorderSizePixel = 0
-		brightnessFill.Size = UDim2.new(1, 0, 1, 0)
-		brightnessFill.Parent = brightnessSlider
-		AddCorner(brightnessFill, 3)
-
-		local transparencyLabel = Instance.new("TextLabel")
-		transparencyLabel.BackgroundTransparency = 1
-		transparencyLabel.Font = GetFont(Window.Font, "Regular")
-		transparencyLabel.Text = "Transparency"
-		transparencyLabel.TextColor3 = Theme.SubText
-		transparencyLabel.TextSize = 11
-		transparencyLabel.Position = UDim2.new(0.5, 5, 0, 240)
-		transparencyLabel.Size = UDim2.new(0.5, -20, 0, 15)
-		transparencyLabel.Parent = tooltip
-
-		local transparencySlider = Instance.new("TextButton")
-		transparencySlider.BackgroundColor3 = Theme.Surface
-		transparencySlider.BorderSizePixel = 0
-		transparencySlider.Position = UDim2.new(0.5, 5, 0, 258)
-		transparencySlider.Size = UDim2.new(0.5, -20, 0, 12)
-		transparencySlider.AutoButtonColor = false
-		transparencySlider.Font = Enum.Font.SourceSans
-		transparencySlider.Text = ""
-		transparencySlider.Parent = tooltip
-		AddCorner(transparencySlider, 3)
-
-		local transparencyGradient = Instance.new("UIGradient")
-		transparencyGradient.Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-			ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
-		}
-		transparencyGradient.Parent = transparencySlider
-
-		local transparencyFill = Instance.new("Frame")
-		transparencyFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		transparencyFill.BorderSizePixel = 0
-		transparencyFill.Size = UDim2.new(1, 0, 1, 0)
-		transparencyFill.Parent = transparencySlider
-		AddCorner(transparencyFill, 3)
-
-		local previewBox = Instance.new("Frame")
-		previewBox.BackgroundColor3 = currentColor
-		previewBox.BorderSizePixel = 0
-		previewBox.Position = UDim2.new(0, 15, 0, 280)
-		previewBox.Size = UDim2.new(1, -30, 0, 15)
-		previewBox.Parent = tooltip
-		AddCorner(previewBox, 4)
-
-		local function updateColor()
-			currentColor = Color3.fromHSV(hue, saturation, value)
-			colorPreview.BackgroundColor3 = currentColor
-			previewBox.BackgroundColor3 = currentColor
-			if sectionConfig.Flag then
-				OpenCore.Flags[sectionConfig.Flag] = {Color = currentColor, Transparency = currentTransparency}
-			end
-			task.spawn(function()
-				pcall(sectionConfig.Callback, {Color = currentColor, Transparency = currentTransparency})
-			end)
-		end
-
-		local function onWheelClick(input)
-			local relativePos = input.Position - wheelCanvas.AbsolutePosition
-			local center = wheelCanvas.AbsoluteSize / 2
-			local delta = relativePos - center
-			local radius = delta.Magnitude
-			local maxRadius = wheelCanvas.AbsoluteSize.X / 2
-			if radius <= maxRadius then
-				saturation = math.min(1, radius / maxRadius)
-				hue = (math.atan2(delta.Y, delta.X) + math.pi) / (2 * math.pi)
-				updateColor()
-			end
-		end
-
-		local function onBrightnessSliderClick(input)
-			local relativeX = input.Position.X - brightnessSlider.AbsolutePosition.X
-			value = math.clamp(relativeX / brightnessSlider.AbsoluteSize.X, 0, 1)
-			brightnessFill.Size = UDim2.new(value, 0, 1, 0)
-			updateColor()
-		end
-
-		local function onTransparencySliderClick(input)
-			local relativeX = input.Position.X - transparencySlider.AbsolutePosition.X
-			currentTransparency = math.clamp(relativeX / transparencySlider.AbsoluteSize.X, 0, 1)
-			transparencyFill.Size = UDim2.new(currentTransparency, 0, 1, 0)
-			updateColor()
-		end
-
-		wheelCanvas.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				onWheelClick(input)
-				local conn = UserInputService.InputChanged:Connect(function(moveInput)
-					if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
-						onWheelClick(moveInput)
-					end
-				end)
-				UserInputService.InputEnded:Connect(function(endInput)
-					if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-						conn:Disconnect()
-					end
-				end)
-			end
-		end)
-
-		brightnessSlider.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				onBrightnessSliderClick(input)
-				local conn = UserInputService.InputChanged:Connect(function(moveInput)
-					if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
-						onBrightnessSliderClick(moveInput)
-					end
-				end)
-				UserInputService.InputEnded:Connect(function(endInput)
-					if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-						conn:Disconnect()
-					end
-				end)
-			end
-		end)
-
-		transparencySlider.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				onTransparencySliderClick(input)
-				local conn = UserInputService.InputChanged:Connect(function(moveInput)
-					if moveInput.UserInputType == Enum.UserInputType.MouseMovement then
-						onTransparencySliderClick(moveInput)
-					end
-				end)
-				UserInputService.InputEnded:Connect(function(endInput)
-					if endInput.UserInputType == Enum.UserInputType.MouseButton1 then
-						conn:Disconnect()
-					end
-				end)
-			end
-		end)
-
-		return tooltip
-	end
-
-	colorPreview.MouseButton1Click:Connect(function()
-		if colorFrame.Parent:FindFirstChild("ColorPickerTooltip") then
-			colorFrame.Parent:FindFirstChild("ColorPickerTooltip"):Destroy()
-		else
-			local tooltip = createColorPickerTooltip()
-			tooltip.Name = "ColorPickerTooltip"
-		end
-	end)
-
-	return {
-		Set = function(self, color)
-			currentColor = color
-			colorPreview.BackgroundColor3 = currentColor
-			if sectionConfig.Flag then
-				OpenCore.Flags[sectionConfig.Flag] = {Color = currentColor, Transparency = currentTransparency}
-			end
-		end
-	}
 end
 
 return OpenCore
